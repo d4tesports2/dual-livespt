@@ -1,0 +1,1539 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+ 
+
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --alive-team-bg: linear-gradient(90deg,rgba(65, 0, 117, 1) 0%, rgba(89, 0, 153, 1) 52%, rgba(75, 0, 130, 1) 100%);
+    --finished-team-bg: #020617;
+    --table-header-bg: linear-gradient(90deg,#9333ea,#7c3aed);
+    --table-font-color:#ffffff;
+    --status-bar-active:#00ff9d;
+    --status-bar-finished:#ef4444;
+    --top5-card-bg: linear-gradient(90deg,rgba(57, 0, 117, 1) 0%, rgba(89, 0, 153, 1) 52%, rgba(75, 0, 130, 1) 100%);
+    --popup-bg: linear-gradient(90deg,#7c3aed,#9333ea);
+    --map-text-color:#ffffff;
+    --style-accent-color:#22d3ee;
+    --style-accent-soft:rgba(34,211,238,0.18);
+    --table-width:320px;
+    --table-row-height:34px;
+    --table-row-font-size:13px;
+    --table-header-font-size:12px;
+    --table-logo-size:18px;
+    --table-bar-height:14px;
+    --table-row-pad-x:8px;
+    --top5-scale:1;
+    --popup-scale:1;
+    --popup-scale-hidden:0.9;
+}
+
+body{
+    margin:0;
+    font-family:'Rajdhani', sans-serif;
+    color:var(--table-font-color);
+    overflow:hidden;
+    opacity:0;
+    transition:opacity 0.15s ease;
+}
+
+body.ready{
+    opacity:1;
+}
+
+/* ================= TOP 5 ================= */
+.top5{
+    position:absolute;
+    top:5px;
+    left:50%;
+    transform:translateX(-50%);
+    scale:var(--top5-scale);
+    transform-origin:center top;
+    display:flex;
+    gap:12px;
+}
+
+.top-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--top5-card-bg);
+    border:1px solid rgba(0,234,255,0.4);
+    padding:12px 16px;
+    border-radius:10px;
+    width:220px;
+    box-shadow:0 0 15px rgba(0,234,255,0.3);
+    clip-path:polygon(6% 0%, 70% 0, 90% 100%, 6% 100%);
+}
+
+.top-logo{
+    width:70px;
+    height:70px;
+    border:2px solid white;
+    border-radius:8px;
+}
+
+.top-text{
+    line-height:1.3;
+    font-size:14px;
+}
+
+.top5[data-top5-style="bgmi"] .top-card{
+    border:2px solid rgba(245,158,11,0.85);
+    border-radius:4px;
+    box-shadow:0 0 24px rgba(245,158,11,0.35), 0 12px 30px rgba(0,0,0,0.75);
+}
+
+.top5[data-top5-style="neon"] .top-card{
+    border:1px solid var(--style-accent-color);
+    border-radius:12px;
+    clip-path:none;
+    color:var(--style-accent-color);
+    backdrop-filter:blur(10px);
+    box-shadow:0 18px 48px rgba(0,0,0,0.75), 0 0 18px var(--style-accent-color), inset 0 0 18px var(--style-accent-soft);
+}
+
+.top5[data-top5-style="compact"]{
+    gap:6px;
+}
+
+.top5[data-top5-style="compact"] .top-card{
+    gap:8px;
+    width:170px;
+    padding:8px 10px;
+    border-radius:3px;
+    clip-path:none;
+}
+
+.top5[data-top5-style="compact"] .top-logo{
+    width:44px;
+    height:44px;
+}
+
+.top5[data-top5-style="compact"] .top-text{
+    font-size:12px;
+    line-height:1.15;
+}
+
+.top5[data-top5-style="glass"] .top-card{
+    background:
+        linear-gradient(rgba(15,23,42,0.38), rgba(15,23,42,0.38)),
+        var(--top5-card-bg);
+    background-blend-mode:normal, screen;
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:12px;
+    clip-path:none;
+    backdrop-filter:blur(10px);
+    box-shadow:0 18px 48px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+
+.top5[data-top5-style="curve_dark"] .top-card{
+    border-left:2px solid rgba(255,255,255,0.45);
+    border-right:7px solid var(--style-accent-color);
+    border-top:0;
+    border-bottom:0;
+    border-radius:0;
+    clip-path:polygon(0 0, calc(100% - 24px) 0, 100% 50%, calc(100% - 24px) 100%, 0 100%);
+    box-shadow:0 3px 0 rgba(167,243,208,0.25);
+}
+
+.top5[data-top5-style="curve_dark"] .top-logo{
+    border-radius:2px;
+}
+
+.top5[data-top5-style="curve_light"] .top-card{
+    border:0;
+    border-radius:999px;
+    clip-path:none;
+    background:var(--top5-card-bg);
+    box-shadow:0 12px 28px rgba(0,0,0,0.7);
+}
+
+.top5[data-top5-style="curve_light"] .top-logo{
+    border-color:#64748b;
+    border-radius:999px;
+}
+
+.top5[data-top5-animation="pop"] .top-card{
+    animation:top5Pop 0.38s ease;
+}
+
+.top5[data-top5-animation="slide"] .top-card,
+.top5[data-top5-animation="slide_io"] .top-card{
+    animation:top5Slide 0.42s cubic-bezier(.2,.8,.2,1);
+}
+
+.top5[data-top5-animation="smooth"] .top-card{
+    animation:top5Smooth 0.7s cubic-bezier(.2,.8,.2,1);
+}
+
+.top5[data-top5-animation="fade_io"] .top-card{
+    animation:top5Fade 0.42s ease;
+}
+
+.top5[data-top5-animation="none"] .top-card{
+    animation:none;
+}
+
+@keyframes top5Pop{
+    0%{ transform:scale(0.92); filter:brightness(1.6); }
+    100%{ transform:scale(1); filter:brightness(1); }
+}
+
+@keyframes top5Slide{
+    0%{ transform:translateY(-30px); opacity:0; }
+    100%{ transform:translateY(0); opacity:1; }
+}
+
+@keyframes top5Smooth{
+    0%{ transform:translateY(-16px); opacity:0.45; }
+    100%{ transform:translateY(0); opacity:1; }
+}
+
+@keyframes top5Fade{
+    0%{ opacity:0; filter:brightness(1.4); }
+    100%{ opacity:1; filter:brightness(1); }
+}
+
+/* ================= PREMIUM POPUP ================= */
+#finishBanner{
+    position:absolute;
+    top:180px;
+    left:50%;
+    transform:translateX(-50%) scale(var(--popup-scale-hidden));
+
+    display:flex;
+    align-items:stretch;
+
+   background: linear-gradient(90deg,rgba(255, 255, 255, 0) 0%, rgba(87, 199, 133, 0) 50%, rgba(237, 221, 83, 0.15) 100%);
+
+    clip-path:polygon(0 0, 85% 0, 100% 100%, 0% 100%);
+
+    overflow:hidden;
+
+    border:1px solid rgba(255,255,255,0.1);
+
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.8),
+        0 0 20px rgba(0,234,255,0.2);
+
+    opacity:0;
+    transition:0.35s ease;
+}
+
+#finishBanner.show{
+    opacity:1;
+    transform:translateX(-50%) scale(var(--popup-scale));
+}
+
+#finishBanner[data-popup-style="bgmi"]{
+    border:2px solid rgba(245,158,11,0.75);
+    box-shadow:0 0 24px rgba(245,158,11,0.35), 0 12px 36px rgba(0,0,0,0.85);
+}
+
+#finishBanner[data-popup-style="neon"]{
+    border:1px solid var(--style-accent-color);
+    border-radius:12px;
+    clip-path:none;
+    backdrop-filter:blur(10px);
+    box-shadow:0 0 18px var(--style-accent-color), inset 0 0 18px var(--style-accent-soft), 0 10px 40px rgba(0,0,0,0.8);
+}
+
+#finishBanner[data-popup-style="compact"] .left-box img{
+    width:118px;
+    height:118px;
+}
+
+#finishBanner[data-popup-style="compact"] .fin-text{
+    font-size:20px;
+}
+
+#finishBanner[data-popup-style="compact"] .team-name{
+    font-size:18px;
+}
+
+#finishBanner[data-popup-style="compact"] .status{
+    font-size:32px;
+    padding:8px 14px;
+}
+
+#finishBanner[data-popup-style="glass"]{
+    background:
+        linear-gradient(rgba(15,23,42,0.38), rgba(15,23,42,0.38)),
+        var(--popup-bg);
+    background-blend-mode:normal, screen;
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:12px;
+    clip-path:none;
+    backdrop-filter:blur(10px);
+    box-shadow:0 18px 48px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+
+#finishBanner[data-popup-style="curve_dark"]{
+    border-left:2px solid rgba(255,255,255,0.45);
+    border-right:9px solid var(--style-accent-color);
+    border-top:0;
+    border-bottom:0;
+    clip-path:polygon(0 0, calc(100% - 28px) 0, 100% 50%, calc(100% - 28px) 100%, 0 100%);
+}
+
+#finishBanner[data-popup-style="curve_light"]{
+    border:0;
+    border-radius:22px;
+    clip-path:none;
+    background:rgba(30,41,59,0.84);
+    box-shadow:0 12px 28px rgba(0,0,0,0.7);
+    overflow:hidden;
+}
+
+#finishBanner[data-popup-animation="none"]{
+    transition:none;
+}
+
+#finishBanner[data-popup-animation="smooth"]{
+    transition:0.7s cubic-bezier(.2,.8,.2,1);
+}
+
+#finishBanner.show[data-popup-animation="pop"]{
+    animation:popupPop 0.4s ease;
+}
+
+#finishBanner.show[data-popup-animation="slide"],
+#finishBanner.show[data-popup-animation="slide_io"]{
+    animation:popupSlide 0.42s cubic-bezier(.2,.8,.2,1);
+}
+
+#finishBanner.show[data-popup-animation="fade_io"]{
+    animation:popupFade 0.42s ease;
+}
+
+@keyframes popupPop{
+    0%{ transform:translateX(-50%) scale(calc(var(--popup-scale) * 0.88)); filter:brightness(1.5); }
+    100%{ transform:translateX(-50%) scale(var(--popup-scale)); filter:brightness(1); }
+}
+
+@keyframes popupSlide{
+    0%{ transform:translateX(-50%) translateY(-35px) scale(var(--popup-scale-hidden)); opacity:0; }
+    100%{ transform:translateX(-50%) translateY(0) scale(var(--popup-scale)); opacity:1; }
+}
+
+@keyframes popupFade{
+    0%{ opacity:0; filter:brightness(1.4); }
+    100%{ opacity:1; filter:brightness(1); }
+}
+
+/* LEFT LOGO */
+.left-box{
+    background:#f1f5f9;
+    padding:0px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    box-shadow:inset -4px 0 12px rgba(0,0,0,0.4);
+}
+
+.left-box img{
+    width:162px;
+    height:162px;
+}
+
+/* RIGHT */
+.right-box{
+    display:flex;
+    flex-direction:column;
+}
+
+/* ðŸ”¥ COMMON ANGLED BAR */
+.angled{
+    position:relative;
+    padding:10px 35px 10px 16px;
+}
+
+/* FIN */
+.top-row{
+    background:var(--popup-bg);
+    z-index:3;
+}
+
+.fin-text{
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:1px;
+}
+
+/* TEAM */
+.team-name{
+    background:linear-gradient(90deg,#0f172a,#1e293b);
+    font-size:22px;
+    font-weight:700;
+    margin-top:-8px;
+    z-index:2;
+}
+
+/* ELIMINATED */
+.status{
+    background:var(--popup-bg);
+    padding:12px 18px;
+    font-size:44px;
+    font-weight:900;
+    letter-spacing:2px;
+    margin-top:-8px;
+}
+
+/* ================= TABLE ================= */
+.container{
+    position:absolute;
+    right:20px;
+    bottom:10px;
+
+    width:var(--table-width);
+
+    backdrop-filter: blur(10px);
+    border:1px solid rgba(0,255,200,0.15);
+
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.8),
+        0 0 20px rgba(0,255,200,0.1);
+
+    border-radius:10px;
+    overflow:hidden;
+}
+
+/* ðŸ”¥ MATCH BAR (ONLY ADDITION) */
+#matchBar{
+    display:flex;
+    align-items:stretch;
+    justify-content:flex-start;
+    gap:0;
+    text-align:left;
+    font-weight:800;
+
+    min-height:44px;
+    padding:0;
+
+    background:var(--table-header-bg);
+    border-bottom:0;
+
+    clip-path:none;
+
+    width:100%;   /* important */
+    box-sizing:border-box;
+}
+
+.header{
+    display:grid;
+    grid-template-columns:30px 1fr 28px 25px 30px 40px;
+    background:var(--table-header-bg);
+    min-height:var(--table-row-height);
+    align-items:center;
+    padding:0 var(--table-row-pad-x);
+    font-size:var(--table-header-font-size);
+    border-top:1px solid rgba(255,255,255,0.18);
+}
+
+#matchText{
+    flex:0 0 74px;
+    min-width:74px;
+    height:44px;
+    display:grid;
+    align-content:start;
+    text-align:left;
+    padding:4px 6px 4px 12px;
+    box-sizing:border-box;
+}
+
+#mapImage{
+    width:130px;
+    height:auto;
+    object-fit:cover;
+    object-position:center;
+    border-left:1px solid rgba(255,255,255,0.35);
+    border-right:1px solid rgba(255,255,255,0.25);
+    margin-right:0;
+    margin-top:0;
+    align-self:stretch;
+}
+
+#mapText{
+    flex:1 1 auto;
+    min-width:0;
+    color:var(--map-text-color);
+    font-weight:900;
+    font-size:18px;
+    line-height:1.05;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    overflow:hidden;
+    display:grid;
+    align-content:start;
+    text-align:left;
+    align-self:stretch;
+    padding:4px 8px;
+    box-sizing:border-box;
+    text-shadow:0 0 5px rgba(0,0,0,0.75);
+}
+
+.row{
+    display:grid;
+    grid-template-columns:18px 1fr 28px 25px 30px 40px;
+    align-items:center;
+    min-height:var(--table-row-height);
+    padding:0 var(--table-row-pad-x);
+    font-size:var(--table-row-font-size);
+    transition:transform 0.45s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease, filter 0.35s ease;
+    will-change:transform, opacity;
+}
+
+.row:nth-child(even){ background:#0b1220; }
+.row:nth-child(odd){ background:#020617; }
+
+.row.alive{
+    background:var(--alive-team-bg);
+}
+
+.row.finished{
+    background:var(--finished-team-bg) !important;
+    opacity:0.8;
+}
+
+.team{
+    display:flex;
+    align-items:center;
+    gap:3px;
+}
+
+.logo{
+    width:var(--table-logo-size);
+    height:var(--table-logo-size);
+    border:2px solid white;
+    border-radius:5px;
+}
+
+/* ALIGN */
+[data-col="chicken"],
+[data-col="kills"],
+[data-col="total"]{
+    text-align:center;
+}
+
+[data-col="status"]{
+    text-align:right;
+}
+
+.chicken-head{
+    font-size:15px;
+    line-height:1;
+    filter:drop-shadow(0 0 4px rgba(255,215,0,0.7));
+}
+
+/* ALIVE BARS */
+.alive-box{
+    display:flex;
+    justify-content:flex-end;
+    gap:2px;
+}
+
+.bar{
+    width:5px;
+    height:var(--table-bar-height);
+    background:var(--status-bar-finished);
+}
+.bar.active{
+    background:var(--status-bar-active);
+}
+.row.finished .bar{
+    background:var(--status-bar-finished);
+}
+
+/* ANIMATION */
+.row.flash{
+    animation:flashRed 0.6s;
+}
+@keyframes flashRed{
+    0%{background:red;}
+    100%{background:#020617;}
+}
+
+.row.out{
+    transform:translateX(400px);
+    opacity:0;
+}
+
+.container[data-animation="fade_io"] .row.out{
+    transform:none;
+    opacity:0;
+}
+
+.container[data-animation="slide_io"] .row.out{
+    transform:translateX(420px);
+    opacity:0;
+}
+
+.container[data-table-style="bgmi"]{
+    border:2px solid rgba(245,158,11,0.75);
+    border-radius:4px;
+    box-shadow:0 0 24px rgba(245,158,11,0.35), 0 12px 36px rgba(0,0,0,0.85);
+}
+.container[data-table-style="bgmi"] #matchBar{
+    background:var(--table-header-bg);
+    clip-path:none;
+}
+.container[data-table-style="bgmi"] .header{
+    background:var(--table-header-bg);
+    color:#fde68a;
+}
+
+.container[data-table-style="neon"]{
+    border:1px solid var(--style-accent-color);
+    border-radius:12px;
+    backdrop-filter:blur(10px);
+    box-shadow:0 18px 48px rgba(0,0,0,0.75), 0 0 18px var(--style-accent-color), inset 0 0 18px var(--style-accent-soft);
+}
+.container[data-table-style="neon"] #matchBar,
+.container[data-table-style="neon"] .header{
+    background:var(--table-header-bg);
+    color:var(--style-accent-color);
+}
+.container[data-table-style="neon"] .row{
+    border-bottom:1px solid var(--style-accent-soft);
+}
+
+.container[data-table-style="compact"]{
+    width:310px;
+    border-radius:3px;
+}
+.container[data-table-style="compact"] #matchBar{
+    padding:4px 12px;
+    clip-path:none;
+}
+.container[data-table-style="compact"] .header{
+    padding:6px;
+    font-size:10px;
+}
+.container[data-table-style="compact"] .row{
+    padding:5px 6px;
+    font-size:12px;
+}
+.container[data-table-style="compact"] .logo{
+    width:15px;
+    height:15px;
+}
+
+.container[data-table-style="glass"]{
+    background:
+        linear-gradient(rgba(15,23,42,0.38), rgba(15,23,42,0.38)),
+        var(--alive-team-bg);
+    background-blend-mode:normal, screen;
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:12px;
+    box-shadow:0 18px 48px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.container[data-table-style="glass"] #matchBar,
+.container[data-table-style="glass"] .header{
+    background:var(--table-header-bg);
+    clip-path:none;
+}
+.container[data-table-style="glass"] .row{
+    margin:3px;
+    border-radius:6px;
+    background:
+        linear-gradient(rgba(15,23,42,0.28), rgba(15,23,42,0.28)),
+        var(--alive-team-bg);
+    background-blend-mode:normal, screen;
+}
+.container[data-table-style="glass"] .row.finished{
+    background:
+        linear-gradient(rgba(15,23,42,0.28), rgba(15,23,42,0.28)),
+        var(--finished-team-bg) !important;
+    background-blend-mode:normal, screen;
+}
+
+.container[data-table-style="curve_dark"]{
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+    overflow:visible;
+}
+.container[data-table-style="curve_dark"] #matchBar{
+    background:var(--table-header-bg);
+    color:var(--table-font-color);
+    clip-path:polygon(0 0, 97% 0, 100% 50%, 97% 100%, 0 100%);
+}
+.container[data-table-style="curve_dark"] .header{
+    background:var(--table-header-bg);
+    color:var(--table-font-color);
+    clip-path:polygon(0 0, 97% 0, 100% 50%, 97% 100%, 0 100%);
+    border-top:0;
+}
+.container[data-table-style="curve_dark"] .row{
+    margin:4px 10px 4px 0;
+    background:var(--alive-team-bg);
+    color:var(--table-font-color);
+    border-left:2px solid rgba(255,255,255,0.45);
+    border-right:7px solid var(--style-accent-color);
+    clip-path:polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%);
+    box-shadow:0 3px 0 rgba(167,243,208,0.25);
+}
+.container[data-table-style="curve_dark"] .row.alive{
+    background:var(--alive-team-bg);
+}
+.container[data-table-style="curve_dark"] .row.finished{
+    background:var(--finished-team-bg) !important;
+}
+.container[data-table-style="curve_dark"] .logo{
+    border-radius:2px;
+}
+
+.container[data-table-style="curve_light"]{
+    border:0;
+    border-radius:18px;
+    background:rgba(30,41,59,0.84);
+    padding:5px 4px 8px;
+    box-shadow:0 12px 28px rgba(0,0,0,0.7);
+}
+.container[data-table-style="curve_light"] #matchBar{
+    border-radius:14px 14px 6px 6px;
+    overflow:hidden;
+    clip-path:none;
+}
+.container[data-table-style="curve_light"] .header{
+    background:var(--table-header-bg);
+    color:var(--table-font-color);
+    border-top:0;
+}
+.container[data-table-style="curve_light"] .row{
+    margin:3px 0;
+    border-radius:999px;
+    background:var(--alive-team-bg);
+    color:var(--table-font-color);
+    overflow:hidden;
+}
+.container[data-table-style="curve_light"] .row.alive{
+    background:var(--alive-team-bg);
+}
+.container[data-table-style="curve_light"] .row.finished{
+    background:var(--finished-team-bg) !important;
+    color:var(--table-font-color);
+}
+.container[data-table-style="curve_light"] .bar{
+    width:7px;
+    border-radius:999px;
+}
+.container[data-table-style="curve_light"] .logo{
+    border-color:#64748b;
+    border-radius:999px;
+}
+
+.row.anim-pop{
+    animation:rowPop 0.38s ease;
+}
+@keyframes rowPop{
+    0%{ transform:scale(0.96); filter:brightness(1.7); }
+    100%{ transform:scale(1); filter:brightness(1); }
+}
+.row.anim-slide-io{
+    animation:rowSlideIn 0.42s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes rowSlideIn{
+    0%{ transform:translateX(120px); opacity:0; }
+    100%{ transform:translateX(0); opacity:1; }
+}
+.row.anim-fade-io{
+    animation:rowFadeIn 0.42s ease;
+}
+@keyframes rowFadeIn{
+    0%{ opacity:0; filter:brightness(1.4); }
+    100%{ opacity:1; filter:brightness(1); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="top5" id="top5"></div>
+
+<!-- POPUP -->
+<div id="finishBanner">
+
+    <div class="left-box">
+        <img id="popupLogo" src="">
+    </div>
+
+    <div class="right-box">
+        <div class="top-row angled">
+            <div class="fin-text" id="popupKill">0 FINISHES</div>
+        </div>
+
+        <div class="team-name angled" id="popupTeam">TEAM</div>
+
+        <div class="status">ELIMINATED</div>
+    </div>
+
+</div>
+
+<div class="container">
+
+    <!-- ðŸ”¥ MATCH BAR -->
+    <div id="matchBar">
+        <span id="matchText"></span>
+        <img id="mapImage" src="" alt="">
+        <span id="mapText"></span>
+    </div>
+
+    <div class="header">
+        <div data-col="rank">#</div>
+        <div data-col="team">TEAM</div>
+        <div data-col="chicken" class="chicken-head">&#128020;</div>
+        <div data-col="kills">FIN</div>
+        <div data-col="total">T P </div>
+        <div data-col="status">STATUS</div>
+    </div>
+
+    <div id="teams"></div>
+</div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+const KEY_HASH = params.get("key");
+
+const SERVER_URL = "https://overlay-server-in1h.onrender.com";
+const API_BASE_URL = KEY_HASH
+    ? `${SERVER_URL}/data/${KEY_HASH}`
+    : `${SERVER_URL}/data`;
+const FINISH_POPUP_STORAGE_KEY = "d4t_finish_popups_v1";
+let lastFinished = null;
+let shownFinishedTeams = loadShownFinishedTeams();
+let popupQueue = [];
+let popupPlaying = false;
+let currentMatchNo = null;
+let lastRenderedSignature = "";
+let lastValidOverlayLayout = null;
+const defaultOverlayLayout = {
+    table_x: "right",
+    table_y: "bottom",
+    top5_x: "center",
+    top5_y: "top",
+    offset_x: 0,
+    offset_y: 0,
+    top5_offset_x: 0,
+    top5_offset_y: 0,
+    table_width: 320,
+    table_row_height: 34,
+    top5_scale: 100,
+    popup_scale: 100,
+    animation_style: "slide",
+    top5_animation_style: "slide",
+    popup_animation_style: "slide",
+    table_style: "current",
+    top5_style: "current",
+    popup_style: "current",
+    alive_color: "linear-gradient(90deg,rgba(65, 0, 117, 1) 0%, rgba(89, 0, 153, 1) 52%, rgba(75, 0, 130, 1) 100%)",
+    finished_color: "#020617",
+    header_color: "linear-gradient(90deg,#9333ea,#7c3aed)",
+    font_color: "#ffffff",
+    status_bar_color: "#00ff9d",
+    finished_status_bar_color: "#ef4444",
+    top5_color: "linear-gradient(90deg,rgba(57, 0, 117, 1) 0%, rgba(89, 0, 153, 1) 52%, rgba(75, 0, 130, 1) 100%)",
+    popup_color: "linear-gradient(90deg,#7c3aed,#9333ea)",
+    map_text: "",
+    side_text: "",
+    map_text_color: "#ffffff",
+    map_text_size: 18,
+    map_text_height: 40,
+    match_text_size: 18,
+    style_color: "#22d3ee",
+    map_text_align: "left",
+    map_text_valign: "top",
+    match_text_align: "left",
+    match_text_valign: "top",
+    show_rank: true,
+    show_team: true,
+    show_chicken: true,
+    show_kills: true,
+    show_total: true,
+    show_status: true,
+    map_name: "Erangel",
+    map_image: "data/map/Erangel.png"
+};
+
+const tableColumns = [
+    { field: "show_rank", col: "rank", width: "18px" },
+    { field: "show_team", col: "team", width: "1fr" },
+    { field: "show_chicken", col: "chicken", width: "28px" },
+    { field: "show_kills", col: "kills", width: "25px" },
+    { field: "show_total", col: "total", width: "30px" },
+    { field: "show_status", col: "status", width: "40px" }
+];
+
+function layoutBool(layout, key){
+    if(Object.prototype.hasOwnProperty.call(layout, key)){
+        let value = layout[key];
+        if(typeof value === "boolean") return value;
+        if(typeof value === "string") return !["0", "false", "no", "off", "hide", "hidden"].includes(value.toLowerCase());
+        return !!value;
+    }
+    return defaultOverlayLayout[key];
+}
+
+function normalizeLayout(layout){
+    layout = layout || {};
+    let tableX = String(layout.table_x || defaultOverlayLayout.table_x).toLowerCase();
+    let tableY = String(layout.table_y || defaultOverlayLayout.table_y).toLowerCase();
+    let top5X = String(layout.top5_x || defaultOverlayLayout.top5_x).toLowerCase();
+    let top5Y = String(layout.top5_y || defaultOverlayLayout.top5_y).toLowerCase();
+    let offsetX = parseInt(layout.offset_x || defaultOverlayLayout.offset_x, 10);
+    let offsetY = parseInt(layout.offset_y || defaultOverlayLayout.offset_y, 10);
+    let top5OffsetX = parseInt(layout.top5_offset_x || defaultOverlayLayout.top5_offset_x, 10);
+    let top5OffsetY = parseInt(layout.top5_offset_y || defaultOverlayLayout.top5_offset_y, 10);
+    let tableWidth = parseInt(layout.table_width || defaultOverlayLayout.table_width, 10);
+    let tableRowHeight = parseInt(layout.table_row_height || defaultOverlayLayout.table_row_height, 10);
+    let top5Scale = parseInt(layout.top5_scale || defaultOverlayLayout.top5_scale, 10);
+    let popupScale = parseInt(layout.popup_scale || defaultOverlayLayout.popup_scale, 10);
+    let animationStyle = String(layout.animation_style || defaultOverlayLayout.animation_style).toLowerCase();
+    let top5AnimationStyle = String(layout.top5_animation_style || layout.animation_style || defaultOverlayLayout.top5_animation_style).toLowerCase();
+    let popupAnimationStyle = String(layout.popup_animation_style || layout.animation_style || defaultOverlayLayout.popup_animation_style).toLowerCase();
+    let tableStyle = String(layout.table_style || defaultOverlayLayout.table_style).toLowerCase();
+    let top5Style = String(layout.top5_style || layout.table_style || defaultOverlayLayout.top5_style).toLowerCase();
+    let popupStyle = String(layout.popup_style || layout.table_style || defaultOverlayLayout.popup_style).toLowerCase();
+    let aliveColor = String(layout.alive_color || defaultOverlayLayout.alive_color);
+    let finishedColor = String(layout.finished_color || defaultOverlayLayout.finished_color);
+    let headerColor = String(layout.header_color || defaultOverlayLayout.header_color);
+    let fontColor = String(layout.font_color || defaultOverlayLayout.font_color);
+    let statusBarColor = String(layout.status_bar_color || defaultOverlayLayout.status_bar_color);
+    let finishedStatusBarColor = String(layout.finished_status_bar_color || defaultOverlayLayout.finished_status_bar_color);
+    let top5Color = String(layout.top5_color || defaultOverlayLayout.top5_color);
+    let popupColor = String(layout.popup_color || defaultOverlayLayout.popup_color);
+    let mapText = String(layout.map_text || defaultOverlayLayout.map_text);
+    let sideText = String(layout.side_text || layout.map_text || defaultOverlayLayout.side_text);
+    let mapTextColor = String(layout.map_text_color || defaultOverlayLayout.map_text_color);
+    let mapTextSize = parseInt(layout.map_text_size || defaultOverlayLayout.map_text_size, 10);
+    let mapTextHeight = parseInt(layout.map_text_height || defaultOverlayLayout.map_text_height, 10);
+    let matchTextSize = parseInt(layout.match_text_size || defaultOverlayLayout.match_text_size, 10);
+    let styleColor = String(layout.style_color || defaultOverlayLayout.style_color);
+    let mapTextAlign = String(layout.map_text_align || defaultOverlayLayout.map_text_align).toLowerCase();
+    let mapTextValign = String(layout.map_text_valign || defaultOverlayLayout.map_text_valign).toLowerCase();
+    let matchTextAlign = String(layout.match_text_align || defaultOverlayLayout.match_text_align).toLowerCase();
+    let matchTextValign = String(layout.match_text_valign || defaultOverlayLayout.match_text_valign).toLowerCase();
+    let showRank = layoutBool(layout, "show_rank");
+    let showTeam = layoutBool(layout, "show_team");
+    let showChicken = layoutBool(layout, "show_chicken");
+    let showKills = layoutBool(layout, "show_kills");
+    let showTotal = layoutBool(layout, "show_total");
+    let showStatus = layoutBool(layout, "show_status");
+    let mapName = String(layout.map_name || defaultOverlayLayout.map_name);
+    let mapImage = String(layout.map_image || defaultOverlayLayout.map_image);
+
+    if(!["left", "center", "right"].includes(tableX)) tableX = defaultOverlayLayout.table_x;
+    if(!["top", "bottom"].includes(tableY)) tableY = defaultOverlayLayout.table_y;
+    if(!["left", "center", "right"].includes(top5X)) top5X = defaultOverlayLayout.top5_x;
+    if(!["top", "bottom"].includes(top5Y)) top5Y = defaultOverlayLayout.top5_y;
+    if(!["slide", "smooth", "pop", "slide_io", "fade_io", "none"].includes(animationStyle)) animationStyle = defaultOverlayLayout.animation_style;
+    if(!["slide", "smooth", "pop", "slide_io", "fade_io", "none"].includes(top5AnimationStyle)) top5AnimationStyle = defaultOverlayLayout.top5_animation_style;
+    if(!["slide", "smooth", "pop", "slide_io", "fade_io", "none"].includes(popupAnimationStyle)) popupAnimationStyle = defaultOverlayLayout.popup_animation_style;
+    if(!["current", "bgmi", "neon", "compact", "glass", "curve_dark", "curve_light"].includes(tableStyle)) tableStyle = defaultOverlayLayout.table_style;
+    if(!["current", "bgmi", "neon", "compact", "glass", "curve_dark", "curve_light"].includes(top5Style)) top5Style = defaultOverlayLayout.top5_style;
+    if(!["current", "bgmi", "neon", "compact", "glass", "curve_dark", "curve_light"].includes(popupStyle)) popupStyle = defaultOverlayLayout.popup_style;
+    if(Number.isNaN(offsetX)) offsetX = defaultOverlayLayout.offset_x;
+    if(Number.isNaN(offsetY)) offsetY = defaultOverlayLayout.offset_y;
+    if(Number.isNaN(top5OffsetX)) top5OffsetX = defaultOverlayLayout.top5_offset_x;
+    if(Number.isNaN(top5OffsetY)) top5OffsetY = defaultOverlayLayout.top5_offset_y;
+    if(Number.isNaN(tableWidth)) tableWidth = defaultOverlayLayout.table_width;
+    if(Number.isNaN(tableRowHeight)) tableRowHeight = defaultOverlayLayout.table_row_height;
+    if(Number.isNaN(top5Scale)) top5Scale = defaultOverlayLayout.top5_scale;
+    if(Number.isNaN(popupScale)) popupScale = defaultOverlayLayout.popup_scale;
+    if(Number.isNaN(mapTextSize)) mapTextSize = defaultOverlayLayout.map_text_size;
+    if(Number.isNaN(mapTextHeight)) mapTextHeight = defaultOverlayLayout.map_text_height;
+    if(Number.isNaN(matchTextSize)) matchTextSize = defaultOverlayLayout.match_text_size;
+    tableWidth = Math.max(240, Math.min(560, tableWidth));
+    tableRowHeight = Math.max(24, Math.min(62, tableRowHeight));
+    top5Scale = Math.max(50, Math.min(180, top5Scale));
+    popupScale = Math.max(50, Math.min(180, popupScale));
+    mapTextSize = Math.max(8, Math.min(64, mapTextSize));
+    matchTextSize = Math.max(8, Math.min(64, matchTextSize));
+    mapTextHeight = Math.max(40, Math.min(180, mapTextHeight));
+    if(!["left", "center", "right"].includes(mapTextAlign)) mapTextAlign = defaultOverlayLayout.map_text_align;
+    if(!["top", "middle", "bottom"].includes(mapTextValign)) mapTextValign = defaultOverlayLayout.map_text_valign;
+    if(!["left", "center", "right"].includes(matchTextAlign)) matchTextAlign = defaultOverlayLayout.match_text_align;
+    if(!["top", "middle", "bottom"].includes(matchTextValign)) matchTextValign = defaultOverlayLayout.match_text_valign;
+
+    return {
+        table_x: tableX,
+        table_y: tableY,
+        top5_x: top5X,
+        top5_y: top5Y,
+        offset_x: offsetX,
+        offset_y: offsetY,
+        top5_offset_x: top5OffsetX,
+        top5_offset_y: top5OffsetY,
+        table_width: tableWidth,
+        table_row_height: tableRowHeight,
+        top5_scale: top5Scale,
+        popup_scale: popupScale,
+        animation_style: animationStyle,
+        top5_animation_style: top5AnimationStyle,
+        popup_animation_style: popupAnimationStyle,
+        table_style: tableStyle,
+        top5_style: top5Style,
+        popup_style: popupStyle,
+        alive_color: aliveColor,
+        finished_color: finishedColor,
+        header_color: headerColor,
+        font_color: fontColor,
+        status_bar_color: statusBarColor,
+        finished_status_bar_color: finishedStatusBarColor,
+        top5_color: top5Color,
+        popup_color: popupColor,
+        map_text: mapText,
+        side_text: sideText,
+        map_text_color: mapTextColor,
+        map_text_size: mapTextSize,
+        map_text_height: mapTextHeight,
+        match_text_size: matchTextSize,
+        style_color: styleColor,
+        map_text_align: mapTextAlign,
+        map_text_valign: mapTextValign,
+        match_text_align: matchTextAlign,
+        match_text_valign: matchTextValign,
+        show_rank: showRank,
+        show_team: showTeam,
+        show_chicken: showChicken,
+        show_kills: showKills,
+        show_total: showTotal,
+        show_status: showStatus,
+        map_name: mapName,
+        map_image: mapImage
+    };
+}
+
+function applyOverlayLayout(layout){
+    let clean = normalizeLayout(layout);
+    let table = document.querySelector(".container");
+    let top5 = document.getElementById("top5");
+    let matchBar = document.getElementById("matchBar");
+    let finishBanner = document.getElementById("finishBanner");
+    let header = document.querySelector(".header");
+    let mapImage = document.getElementById("mapImage");
+    let mapText = document.getElementById("mapText");
+    let matchText = document.getElementById("matchText");
+
+    table.style.left = "auto";
+    table.style.right = "auto";
+    table.style.top = "auto";
+    table.style.bottom = "auto";
+    if(clean.table_x === "center"){
+        table.style.left = "50%";
+        table.style.transform = `translate(calc(-50% + ${clean.offset_x}px), ${clean.offset_y}px)`;
+    }else{
+        let tableEdgeOffset = 20 - ((clean.table_width - defaultOverlayLayout.table_width) / 2);
+        table.style[clean.table_x] = tableEdgeOffset + "px";
+        table.style.transform = `translate(${clean.offset_x}px, ${clean.offset_y}px)`;
+    }
+    table.style.color = clean.font_color || defaultOverlayLayout.font_color;
+    table.style.width = clean.table_width + "px";
+
+    let rowFontSize = Math.max(10, Math.min(18, Math.round(clean.table_row_height * 0.38)));
+    let headerFontSize = Math.max(9, Math.min(16, rowFontSize - 1));
+    let logoSize = Math.max(14, Math.min(30, clean.table_row_height - 14));
+    let barHeight = Math.max(10, Math.min(28, clean.table_row_height - 18));
+    let padX = Math.max(6, Math.min(12, Math.round(clean.table_row_height * 0.24)));
+    let headerScale = Math.max(0.72, Math.min(1.55, ((clean.table_width / defaultOverlayLayout.table_width) + (clean.table_row_height / defaultOverlayLayout.table_row_height)) / 2));
+    let mapImageWidth = Math.max(92, Math.min(230, Math.round(130 * headerScale)));
+    let matchTextWidth = Math.max(54, Math.min(112, Math.round(74 * headerScale)));
+    let matchBarHeight = Math.max(46, clean.map_text_height + 7, Math.round(44 * headerScale));
+    let currentRowCount = Math.max(1, document.querySelectorAll("#teams .row").length || 0);
+    let defaultMatchBarHeight = Math.max(46, defaultOverlayLayout.map_text_height + 7, 44);
+    let tableHeightDelta = ((clean.table_row_height - defaultOverlayLayout.table_row_height) * (currentRowCount + 1)) + (matchBarHeight - defaultMatchBarHeight);
+    let tableVerticalEdgeOffset = 10 - (tableHeightDelta / 2);
+    table.style[clean.table_y] = tableVerticalEdgeOffset + "px";
+    document.documentElement.style.setProperty("--table-width", clean.table_width + "px");
+    document.documentElement.style.setProperty("--table-row-height", clean.table_row_height + "px");
+    document.documentElement.style.setProperty("--table-row-font-size", rowFontSize + "px");
+    document.documentElement.style.setProperty("--table-header-font-size", headerFontSize + "px");
+    document.documentElement.style.setProperty("--table-logo-size", logoSize + "px");
+    document.documentElement.style.setProperty("--table-bar-height", barHeight + "px");
+    document.documentElement.style.setProperty("--table-row-pad-x", padX + "px");
+    document.documentElement.style.setProperty("--top5-scale", (clean.top5_scale / 100).toFixed(2));
+    document.documentElement.style.setProperty("--popup-scale", (clean.popup_scale / 100).toFixed(2));
+    document.documentElement.style.setProperty("--popup-scale-hidden", ((clean.popup_scale / 100) * 0.9).toFixed(2));
+
+    top5.style.top = "auto";
+    top5.style.bottom = "auto";
+    top5.style.left = "auto";
+    top5.style.right = "auto";
+    top5.style[clean.top5_y] = "5px";
+    if(clean.top5_x === "center"){
+        top5.style.left = "50%";
+        top5.style.transform = `translate(calc(-50% + ${clean.top5_offset_x}px), ${clean.top5_offset_y}px)`;
+        top5.style.transformOrigin = clean.top5_y === "bottom" ? "center bottom" : "center top";
+    }else{
+        top5.style[clean.top5_x] = "20px";
+        top5.style.transform = `translate(${clean.top5_offset_x}px, ${clean.top5_offset_y}px)`;
+        top5.style.transformOrigin = `${clean.top5_x} ${clean.top5_y}`;
+    }
+
+    document.documentElement.style.setProperty("--alive-team-bg", clean.alive_color || defaultOverlayLayout.alive_color);
+    document.documentElement.style.setProperty("--finished-team-bg", clean.finished_color || defaultOverlayLayout.finished_color);
+    document.documentElement.style.setProperty("--table-header-bg", clean.header_color || defaultOverlayLayout.header_color);
+    document.documentElement.style.setProperty("--table-font-color", clean.font_color || defaultOverlayLayout.font_color);
+    document.documentElement.style.setProperty("--status-bar-active", clean.status_bar_color || defaultOverlayLayout.status_bar_color);
+    document.documentElement.style.setProperty("--status-bar-finished", clean.finished_status_bar_color || defaultOverlayLayout.finished_status_bar_color);
+    document.documentElement.style.setProperty("--top5-card-bg", clean.top5_color || defaultOverlayLayout.top5_color);
+    document.documentElement.style.setProperty("--popup-bg", clean.popup_color || defaultOverlayLayout.popup_color);
+    document.documentElement.style.setProperty("--map-text-color", clean.map_text_color || defaultOverlayLayout.map_text_color);
+    document.documentElement.style.setProperty("--style-accent-color", clean.style_color || defaultOverlayLayout.style_color);
+    document.documentElement.style.setProperty("--style-accent-soft", `color-mix(in srgb, ${clean.style_color || defaultOverlayLayout.style_color} 18%, transparent)`);
+    if(matchBar){
+        matchBar.style.background = clean.header_color || defaultOverlayLayout.header_color;
+        matchBar.dataset.baseHeight = matchBarHeight;
+        matchBar.style.minHeight = matchBarHeight + "px";
+    }
+    if(header) header.style.background = clean.header_color || defaultOverlayLayout.header_color;
+    if(mapImage){
+        mapImage.src = clean.map_image || defaultOverlayLayout.map_image;
+        mapImage.alt = clean.map_name || defaultOverlayLayout.map_name;
+        mapImage.style.width = mapImageWidth + "px";
+    }
+    if(mapText){
+        let verticalAlign = clean.map_text_valign === "middle" ? "center" : (clean.map_text_valign === "bottom" ? "end" : "start");
+        mapText.innerText = clean.side_text || clean.map_text || "";
+        mapText.dataset.baseSize = clean.map_text_size;
+        mapText.dataset.boxHeight = clean.map_text_height;
+        mapText.style.setProperty("font-size", clean.map_text_size + "px", "important");
+        mapText.style.height = clean.map_text_height + "px";
+        mapText.style.maxHeight = clean.map_text_height + "px";
+        mapText.style.textAlign = clean.map_text_align;
+        mapText.style.alignContent = verticalAlign;
+        requestAnimationFrame(fitMapText);
+    }
+    if(matchText){
+        let matchVerticalAlign = clean.match_text_valign === "middle" ? "center" : (clean.match_text_valign === "bottom" ? "end" : "start");
+        matchText.style.flexBasis = matchTextWidth + "px";
+        matchText.style.minWidth = matchTextWidth + "px";
+        matchText.style.textAlign = clean.match_text_align;
+        matchText.style.alignContent = matchVerticalAlign;
+        matchText.style.height = clean.map_text_height + "px";
+        matchText.style.setProperty("font-size", clean.match_text_size + "px", "important");
+    }
+    console.log("Overlay layout:", clean);
+    table.dataset.animation = clean.animation_style;
+    table.dataset.tableStyle = clean.table_style;
+    top5.dataset.top5Animation = clean.top5_animation_style;
+    top5.dataset.top5Style = clean.top5_style;
+    if(finishBanner){
+        finishBanner.dataset.popupStyle = clean.popup_style;
+        finishBanner.dataset.popupAnimation = clean.popup_animation_style;
+    }
+    return clean;
+}
+
+function applyTableColumns(layout){
+    let visibleColumns = tableColumns.filter(column => layout[column.field]);
+    if(visibleColumns.length === 0){
+        visibleColumns = tableColumns;
+    }
+
+    let gridTemplate = visibleColumns.map(column => column.width).join(" ");
+    document.querySelector(".header").style.gridTemplateColumns = gridTemplate;
+    document.querySelectorAll(".row").forEach(row=>{
+        row.style.gridTemplateColumns = gridTemplate;
+    });
+
+    tableColumns.forEach(column=>{
+        let display = visibleColumns.includes(column) ? "" : "none";
+        document.querySelectorAll(`[data-col="${column.col}"]`).forEach(el=>{
+            el.style.display = display;
+        });
+    });
+}
+
+function rowKey(team){
+    return String(team || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+function loadShownFinishedTeams(){
+    try{
+        return new Set(JSON.parse(localStorage.getItem(FINISH_POPUP_STORAGE_KEY) || "[]"));
+    }catch(err){
+        return new Set();
+    }
+}
+
+function saveShownFinishedTeams(){
+    try{
+        localStorage.setItem(FINISH_POPUP_STORAGE_KEY, JSON.stringify([...shownFinishedTeams]));
+    }catch(err){}
+}
+
+function finishPopupKey(matchNo, team){
+    return String(matchNo || 1) + "_" + rowKey(team);
+}
+
+function markFinishPopupShown(key){
+    shownFinishedTeams.add(key);
+    saveShownFinishedTeams();
+}
+
+function getRowPositions(){
+    let positions = {};
+    document.querySelectorAll("#teams .row").forEach(row=>{
+        positions[row.dataset.teamKey] = row.getBoundingClientRect().top;
+    });
+    return positions;
+}
+
+function animateTableRows(previousPositions, animationStyle){
+    if(animationStyle === "none") return;
+
+    let duration = animationStyle === "smooth" ? 700 : 430;
+    document.querySelectorAll("#teams .row").forEach(row=>{
+        let previousTop = previousPositions[row.dataset.teamKey];
+        if(previousTop === undefined){
+            if(animationStyle === "pop"){
+                row.classList.add("anim-pop");
+                setTimeout(()=>row.classList.remove("anim-pop"), 420);
+            }else if(animationStyle === "slide_io"){
+                row.classList.add("anim-slide-io");
+                setTimeout(()=>row.classList.remove("anim-slide-io"), 460);
+            }else if(animationStyle === "fade_io"){
+                row.classList.add("anim-fade-io");
+                setTimeout(()=>row.classList.remove("anim-fade-io"), 460);
+            }
+            return;
+        }
+
+        let currentTop = row.getBoundingClientRect().top;
+        let deltaY = previousTop - currentTop;
+        if(Math.abs(deltaY) < 1){
+            if(animationStyle === "pop"){
+                row.classList.add("anim-pop");
+                setTimeout(()=>row.classList.remove("anim-pop"), 420);
+            }else if(animationStyle === "fade_io"){
+                row.classList.add("anim-fade-io");
+                setTimeout(()=>row.classList.remove("anim-fade-io"), 460);
+            }
+            return;
+        }
+
+        row.style.transition = "none";
+        row.style.transform = `translateY(${deltaY}px)`;
+        if(animationStyle === "pop") row.classList.add("anim-pop");
+        if(animationStyle === "fade_io") row.style.opacity = "0.35";
+
+        requestAnimationFrame(()=>{
+            row.style.transition = `transform ${duration}ms cubic-bezier(.2,.8,.2,1), opacity 350ms ease, filter 350ms ease`;
+            row.style.transform = "";
+            row.style.opacity = "";
+            if(animationStyle === "pop"){
+                setTimeout(()=>row.classList.remove("anim-pop"), 420);
+            }
+        });
+    });
+}
+
+function fitMapText(){
+    let text = document.getElementById("mapText");
+    if(!text) return;
+
+    let baseSize = parseInt(text.dataset.baseSize || defaultOverlayLayout.map_text_size, 10);
+    let boxHeight = parseInt(text.dataset.boxHeight || defaultOverlayLayout.map_text_height, 10);
+    if(Number.isNaN(baseSize)) baseSize = defaultOverlayLayout.map_text_size;
+    if(Number.isNaN(boxHeight)) boxHeight = defaultOverlayLayout.map_text_height;
+    baseSize = Math.max(8, Math.min(64, baseSize));
+    boxHeight = Math.max(40, Math.min(180, boxHeight));
+    let matchBar = document.getElementById("matchBar");
+    if(matchBar){
+        let baseHeight = parseInt(matchBar.dataset.baseHeight || "0", 10);
+        matchBar.style.minHeight = Math.max(46, boxHeight + 7, Number.isNaN(baseHeight) ? 0 : baseHeight) + "px";
+    }
+    text.style.height = boxHeight + "px";
+    text.style.maxHeight = boxHeight + "px";
+    let sizes = [baseSize, baseSize - 2, baseSize - 4, baseSize - 6, baseSize - 8, 10, 8]
+        .filter((size, index, arr)=>size >= 8 && arr.indexOf(size) === index);
+    for(let size of sizes){
+        text.style.setProperty("font-size", size + "px", "important");
+        if(text.scrollHeight <= text.clientHeight + 1 && text.scrollWidth <= text.clientWidth + 1){
+            break;
+        }
+    }
+}
+
+function cleanTeamName(team){
+    return String(team || "default").trim();
+}
+
+function logoPath(name, ext){
+    return "logos/" + encodeURIComponent(name).replace(/%2F/gi, "") + "." + ext;
+}
+
+function getLogo(team){
+    return getLogoVariants(team)[0];
+}
+
+function getLogoVariants(team){
+    let name = cleanTeamName(team);
+    let noSpace = name.replace(/\s/g, "");
+    let lowerNoSpace = name.toLowerCase().replace(/\s/g, "");
+
+    return [
+        logoPath(name, "png"),
+        logoPath(name, "PNG"),
+        logoPath(name, "jpg"),
+        logoPath(name, "jpeg"),
+        logoPath(name, "webp"),
+        logoPath(noSpace, "png"),
+        logoPath(lowerNoSpace, "png"),
+        logoPath(name.toLowerCase(), "png"),
+        logoPath(name.toUpperCase(), "png"),
+        "logos/default.png"
+    ].filter((value, index, arr)=>value && arr.indexOf(value) === index);
+}
+
+function logoFallback(img){
+    let variants = JSON.parse(img.dataset.variants || "[]");
+    let index = parseInt(img.dataset.index || "0", 10) + 1;
+
+    if(index < variants.length){
+        img.dataset.index = index;
+        img.src = variants[index];
+    }else{
+        img.onerror = null;
+        img.src = "logos/default.png";
+    }
+}
+
+function logoImgTag(className, team){
+    let variants = getLogoVariants(team);
+    return `<img class="${className}" src="${variants[0]}" data-index="0" data-variants='${JSON.stringify(variants)}' onerror="logoFallback(this)">`;
+}
+function aliveBars(n){
+    let h="";
+    for(let i=0;i<4;i++){
+        h+=`<div class="bar ${i<n?'active':''}"></div>`;
+    }
+    return h;
+}
+
+function showPopup(team,kills,aliveTeams){
+
+    let banner = document.getElementById("finishBanner");
+
+    document.getElementById("popupTeam").innerText = team;
+    document.getElementById("popupKill").innerText = kills + " FINISHES";
+
+    let popupLogo = document.getElementById("popupLogo");
+    let variants = getLogoVariants(team);
+    popupLogo.dataset.index = "0";
+    popupLogo.dataset.variants = JSON.stringify(variants);
+    popupLogo.onerror = function(){
+        logoFallback(this);
+    };
+    popupLogo.src = variants[0];
+
+    let finishPos = parseInt(aliveTeams || 0, 10) + 1;
+    if(Number.isFinite(finishPos)){
+        document.getElementById("popupTeam").innerText = "#" + finishPos + " - " + team;
+    }
+
+    banner.classList.add("show");
+
+    setTimeout(()=>{
+        banner.classList.remove("show");
+    },6000);
+}
+
+function playNextPopup(){
+    if(popupPlaying) return;
+
+    let item = popupQueue.shift();
+    if(!item) return;
+
+    popupPlaying = true;
+    showPopup(item.team, item.kills, item.aliveTeams);
+
+    setTimeout(()=>{
+        popupPlaying = false;
+        playNextPopup();
+    }, 6800);
+}
+
+function queuePopup(team, kills, aliveTeams){
+    popupQueue.push({ team, kills, aliveTeams });
+    playNextPopup();
+}
+function hasRenderableData(data){
+    return data && typeof data === "object" && Array.isArray(data.teams);
+}
+function update(data){
+    if(!hasRenderableData(data)){
+        document.body.classList.add("ready");
+        return;
+    }
+
+    let signature = JSON.stringify({
+        remaining_players: data.remaining_players || "",
+        alive_teams: data.alive_teams || "",
+        match_no: data.match_no || 1,
+        teams: data.teams || [],
+        top_players: data.top_players || [],
+        show_top5: !!data.show_top5,
+        show_popup: data.show_popup !== false,
+        overlay_layout: data.overlay_layout || {}
+    });
+    if(signature === lastRenderedSignature) return;
+    lastRenderedSignature = signature;
+
+    let incomingLayout = data.overlay_layout && Object.keys(data.overlay_layout).length
+    ? data.overlay_layout
+    : lastValidOverlayLayout;
+
+if (incomingLayout) {
+    lastValidOverlayLayout = incomingLayout;
+}
+
+let layout = applyOverlayLayout(incomingLayout || defaultOverlayLayout);
+    let previousPositions = getRowPositions();
+
+    // ðŸ”¥ MATCH NO UPDATE (ONLY ADDITION)
+    document.getElementById("matchText").innerText = "MATCH " + (data.match_no || 1);
+
+    let teams = (data.teams || []).sort((a,b)=>{
+        if((b.total||0)!==(a.total||0)) return (b.total||0)-(a.total||0);
+
+        let aliveA = a.finished?0:(a.alive||0);
+        let aliveB = b.finished?0:(b.alive||0);
+
+        if(aliveB!==aliveA) return aliveB-aliveA;
+
+        return (b.kills||0)-(a.kills||0);
+    });
+
+    let html="";
+
+    teams.forEach((t,i)=>{
+        let key = rowKey(t.team);
+        html+=`
+        <div class="row ${t.finished ? 'finished' : 'alive'}" id="team-${key}" data-team-key="${key}">
+            <div data-col="rank">${i+1}</div>
+            <div data-col="team" class="team">
+                ${logoImgTag("logo", t.team)}
+                ${t.team}
+            </div>
+            <div data-col="chicken">${t.chicken||0}</div>
+            <div data-col="kills">${t.kills||0}</div>
+            <div data-col="total">${t.total||0}</div>
+            <div data-col="status" class="alive-box">
+                ${aliveBars(t.finished?0:(t.alive||0))}
+            </div>
+        </div>`;
+    });
+
+    document.getElementById("teams").innerHTML = html;
+    layout = applyOverlayLayout(layout);
+    applyTableColumns(layout);
+    animateTableRows(previousPositions, layout.animation_style);
+
+    let matchNo = data.match_no || 1;
+
+if(currentMatchNo !== matchNo){
+    currentMatchNo = matchNo;
+    popupQueue = [];
+    popupPlaying = false;
+    lastFinished = null;
+}
+
+let popupEnabled = data.show_popup !== false;
+if(!popupEnabled){
+    popupQueue = [];
+    popupPlaying = false;
+    document.getElementById("finishBanner").classList.remove("show");
+    teams.forEach(t=>{
+        if(t.finished){
+            markFinishPopupShown(finishPopupKey(matchNo, t.team));
+        }
+    });
+}
+
+if(popupEnabled) teams.forEach(t=>{
+    if(!t.finished) return;
+
+    let key = finishPopupKey(matchNo, t.team);
+
+    if(!shownFinishedTeams.has(key)){
+        markFinishPopupShown(key);
+        lastFinished = t.team;
+
+        queuePopup(t.team, t.kills, data.alive_teams);
+
+        let row = document.getElementById("team-"+rowKey(t.team));
+
+        if(row){
+    row.classList.add("flash");
+
+    setTimeout(()=>{
+        row.classList.remove("flash");
+    },700);
+}
+    }
+});
+
+    let topHTML="";
+    if(data.show_top5){
+        (data.top_players||[]).forEach((p,i)=>{
+            topHTML+=`
+            <div class="top-card">
+                ${logoImgTag("top-logo", p.team)}
+                <div class="top-text">
+                    #${i+1}<br>
+                    ${p.team}<br>
+                    ${p.name}<br>
+                    ${p.kills} KILLS
+                </div>
+            </div>`;
+        });
+    }
+
+    document.getElementById("top5").innerHTML = topHTML;
+    document.body.classList.add("ready");
+}
+
+function fetchData(){
+    if(!KEY_HASH){
+        console.log("Missing customer key in overlay URL. Use ?key=YOUR_HASH");
+        document.body.classList.add("ready");
+        return;
+    }
+
+    fetch(API_BASE_URL + "?nocache=" + Date.now(), {
+        cache: "no-store",
+        headers: {
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache"
+        }
+    })
+    .then(r=>{
+        if(!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+    })
+    .then(update)
+    .catch(err=>{
+        console.log("overlay data error", err);
+        document.body.classList.add("ready");
+    });
+}
+
+setInterval(fetchData, 2000);
+fetchData();
+
+</script>
+
+</body>
+</html>
+

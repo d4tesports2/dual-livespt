@@ -1,0 +1,2467 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+
+
+<link href="https://fonts.googleapis.com/css2?family=Asset&family=Barlow+Condensed:wght@500;600;700&family=Ewert&family=Lobster&family=Orbitron:wght@500;600;700&family=Oswald:wght@500;600;700&family=Rajdhani:wght@600;700&family=Story+Script&family=Teko:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --alive-team-bg: linear-gradient(100deg,#21004b 0%,#6d28d9 52%,#3b0764 100%);
+    --finished-team-bg: linear-gradient(100deg,#111827 0%,#030712 100%);
+    --table-header-bg: linear-gradient(100deg,#c084fc 0%,#7c3aed 48%,#4c1d95 100%);
+    --table-font-color:#ffffff;
+    --counter-bg:#1e1b4b;
+    --counter-text-color:#ffffff;
+    --counter-bar-height:34px;
+    --status-bar-active:#00ff9d;
+    --status-bar-finished:#ef4444;
+    --top5-card-bg: linear-gradient(90deg,rgba(57, 0, 117, 1) 0%, rgba(89, 0, 153, 1) 52%, rgba(75, 0, 130, 1) 100%);
+    --popup-bg: linear-gradient(90deg,#7c3aed,#9333ea);
+    --data-left-bg:#f7f7f2;
+    --data-right-bg:#08272a;
+    --data-left-font-color:#ffffff;
+    --data-right-font-color:#ffffff;
+    --map-text-color:#ffffff;
+    --popup-text-color:#ffffff;
+    --top5-text-color:#ffffff;
+    --style-accent-color:#22d3ee;
+    --style-accent-soft:rgba(34,211,238,0.18);
+    --table-width:320px;
+    --table-row-height:34px;
+    --table-row-font-size:13px;
+    --table-header-font-size:12px;
+    --table-logo-size:18px;
+    --table-bar-height:14px;
+    --status-bar-width:10px;
+    --status-bar-gap:2px;
+    --status-bar-height:14px;
+    --status-bar-radius:2px;
+    --status-bar-animation-speed:450ms;
+    --row-border-thickness:1px;
+    --row-divider-width:1px;
+    --table-col-rank-width:22px;
+    --table-col-team-width:220px;
+    --table-col-chicken-width:30px;
+    --table-col-kills-width:30px;
+    --table-col-total-width:32px;
+    --table-col-status-width:45px;
+    --table-row-pad-x:8px;
+    --top5-scale:1;
+    --popup-scale:1;
+    --popup-scale-hidden:0.9;
+    --overlay-font:'Rajdhani', sans-serif;
+}
+
+body{
+    margin:0;
+    font-family:var(--overlay-font);
+    color:var(--table-font-color);
+    overflow:hidden;
+    opacity:0;
+    transition:opacity 0.15s ease;
+}
+
+body.ready{
+    opacity:1;
+}
+
+.win-chance{
+    position:absolute;
+    top:calc(52px + var(--win-chance-offset-y, 0px));
+    left:calc(50% + var(--win-chance-offset-x, 0px));
+    transform:translateX(-50%);
+    display:flex;
+    gap:28px;
+    align-items:flex-start;
+    justify-content:center;
+    z-index:8;
+    pointer-events:none;
+}
+
+.win-card{
+    width:185px;
+    background:#0b2f34;
+    border:1px solid rgba(0,255,220,0.45);
+    box-shadow:0 10px 28px rgba(0,0,0,0.55);
+}
+
+.win-card-main{
+    display:grid;
+    grid-template-columns:64px 1fr;
+    align-items:center;
+    min-height:70px;
+    background:rgba(6,35,39,0.94);
+}
+
+.win-logo{
+    width:54px;
+    height:54px;
+    object-fit:contain;
+    margin:0 auto;
+}
+
+.win-bars{
+    display:flex;
+    justify-content:center;
+    gap:7px;
+}
+
+.win-card .bar{
+    width:13px;
+    height:48px;
+}
+
+.win-label{
+    background:linear-gradient(90deg,#069f9b,#18d3cc);
+    color:#eaffff;
+    text-align:center;
+    font-size:24px;
+    font-weight:900;
+    line-height:1;
+    padding:8px 4px 7px;
+    text-shadow:0 2px 2px rgba(0,0,0,0.45);
+    white-space:nowrap;
+}
+
+.win-chance:empty{
+    display:none;
+}
+
+/* ================= TOP 5 ================= */
+.top5{
+    position:absolute;
+    top:5px;
+    left:50%;
+    transform:translateX(-50%);
+    scale:var(--top5-scale);
+    transform-origin:center top;
+    display:flex;
+    gap:12px;
+}
+
+.top5[data-top5-orientation="vertical"]{
+    flex-direction:column;
+    gap:10px;
+}
+
+.top-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--top5-card-bg);
+    border:1px solid rgba(0,234,255,0.4);
+    padding:12px 16px;
+    border-radius:10px;
+    width:220px;
+    box-shadow:0 0 15px rgba(0,234,255,0.3);
+    clip-path:polygon(6% 0%, 70% 0, 90% 100%, 6% 100%);
+}
+
+.top-logo{
+    width:70px;
+    height:70px;
+    border:2px solid white;
+    border-radius:8px;
+}
+
+.top-text{
+    line-height:1.3;
+    font-size:14px;
+    color:var(--top5-text-color);
+}
+
+.top5[data-top5-style="bgmi"] .top-card{
+    border:2px solid rgba(245,158,11,0.85);
+    border-radius:4px;
+    box-shadow:0 0 24px rgba(245,158,11,0.35), 0 12px 30px rgba(0,0,0,0.75);
+}
+
+.top5[data-top5-style="neon"] .top-card{
+    border:1px solid var(--style-accent-color);
+    border-radius:12px;
+    clip-path:none;
+    color:var(--style-accent-color);
+    backdrop-filter:blur(10px);
+    box-shadow:0 18px 48px rgba(0,0,0,0.75), 0 0 18px var(--style-accent-color), inset 0 0 18px var(--style-accent-soft);
+}
+
+.top5[data-top5-style="compact"]{
+    gap:6px;
+}
+
+.top5[data-top5-style="compact"] .top-card{
+    gap:8px;
+    width:170px;
+    padding:8px 10px;
+    border-radius:3px;
+    clip-path:none;
+}
+
+.top5[data-top5-style="compact"] .top-logo{
+    width:44px;
+    height:44px;
+}
+
+.top5[data-top5-style="compact"] .top-text{
+    font-size:12px;
+    line-height:1.15;
+}
+
+.top5[data-top5-style="glass"] .top-card{
+    background:
+        linear-gradient(rgba(15,23,42,0.38), rgba(15,23,42,0.38)),
+        var(--top5-card-bg);
+    background-blend-mode:normal, screen;
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:12px;
+    clip-path:none;
+    backdrop-filter:blur(10px);
+    box-shadow:0 18px 48px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+
+.top5[data-top5-style="curve_dark"] .top-card{
+    border-left:2px solid rgba(255,255,255,0.45);
+    border-right:7px solid var(--style-accent-color);
+    border-top:0;
+    border-bottom:0;
+    border-radius:0;
+    clip-path:polygon(0 0, calc(100% - 24px) 0, 100% 50%, calc(100% - 24px) 100%, 0 100%);
+    box-shadow:0 3px 0 rgba(167,243,208,0.25);
+}
+
+.top5[data-top5-style="curve_dark"] .top-logo{
+    border-radius:2px;
+}
+
+.top5[data-top5-style="curve_light"] .top-card{
+    border:0;
+    border-radius:999px;
+    clip-path:none;
+    background:var(--top5-card-bg);
+    box-shadow:0 12px 28px rgba(0,0,0,0.7);
+}
+
+.top5[data-top5-style="curve_light"] .top-logo{
+    border-color:#64748b;
+    border-radius:999px;
+}
+
+.top5[data-top5-style="scoreboard"] .top-card{
+    background:var(--alive-team-bg);
+    border:2px solid #071e22;
+    border-radius:0;
+    clip-path:none;
+    color:var(--table-font-color);
+    box-shadow:0 10px 28px rgba(0,0,0,0.65);
+}
+
+.top5[data-top5-style="scoreboard"] .top-logo{
+    border:0;
+    border-radius:0;
+    object-fit:contain;
+}
+
+.top5[data-top5-animation="pop"] .top-card{
+    animation:top5Pop 0.38s ease;
+}
+
+.top5[data-top5-animation="slide"] .top-card,
+.top5[data-top5-animation="slide_io"] .top-card{
+    animation:top5Slide 0.42s cubic-bezier(.2,.8,.2,1);
+}
+
+.top5[data-top5-animation="smooth"] .top-card{
+    animation:top5Smooth 0.7s cubic-bezier(.2,.8,.2,1);
+}
+
+.top5[data-top5-animation="fade_io"] .top-card{
+    animation:top5Fade 0.42s ease;
+}
+
+.top5[data-top5-animation="none"] .top-card{
+    animation:none;
+}
+
+@keyframes top5Pop{
+    0%{ transform:scale(0.92); filter:brightness(1.6); }
+    100%{ transform:scale(1); filter:brightness(1); }
+}
+
+@keyframes top5Slide{
+    0%{ transform:translateY(-30px); opacity:0; }
+    100%{ transform:translateY(0); opacity:1; }
+}
+
+@keyframes top5Smooth{
+    0%{ transform:translateY(-16px); opacity:0.45; }
+    100%{ transform:translateY(0); opacity:1; }
+}
+
+@keyframes top5Fade{
+    0%{ opacity:0; filter:brightness(1.4); }
+    100%{ opacity:1; filter:brightness(1); }
+}
+
+/* ================= PREMIUM POPUP ================= */
+#finishBanner{
+    position:absolute;
+    top:calc(180px + var(--popup-offset-y, 0px));
+    left:calc(50% + var(--popup-offset-x, 0px));
+    transform:translateX(-50%) scale(var(--popup-scale-hidden));
+
+    display:flex;
+    align-items:stretch;
+
+   background: linear-gradient(90deg,rgba(255, 255, 255, 0) 0%, rgba(87, 199, 133, 0) 50%, rgba(237, 221, 83, 0.15) 100%);
+
+    clip-path:polygon(0 0, 85% 0, 100% 100%, 0% 100%);
+
+    overflow:hidden;
+
+    border:1px solid rgba(255,255,255,0.1);
+
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.8),
+        0 0 20px rgba(0,234,255,0.2);
+
+    opacity:0;
+    transition:0.35s ease;
+    color:var(--popup-text-color);
+}
+
+#finishBanner.show{
+    opacity:1;
+    transform:translateX(-50%) scale(var(--popup-scale));
+}
+
+#finishBanner[data-popup-style="bgmi"]{
+    border:2px solid rgba(245,158,11,0.75);
+    box-shadow:0 0 24px rgba(245,158,11,0.35), 0 12px 36px rgba(0,0,0,0.85);
+}
+
+#finishBanner[data-popup-style="neon"]{
+    border:1px solid var(--style-accent-color);
+    border-radius:12px;
+    clip-path:none;
+    backdrop-filter:blur(10px);
+    box-shadow:0 0 18px var(--style-accent-color), inset 0 0 18px var(--style-accent-soft), 0 10px 40px rgba(0,0,0,0.8);
+}
+
+#finishBanner[data-popup-style="compact"] .left-box img{
+    width:118px;
+    height:118px;
+}
+
+#finishBanner[data-popup-style="compact"] .fin-text{
+    font-size:20px;
+}
+
+#finishBanner[data-popup-style="compact"] .team-name{
+    font-size:18px;
+}
+
+#finishBanner[data-popup-style="compact"] .status{
+    font-size:32px;
+    padding:8px 14px;
+}
+
+#finishBanner[data-popup-style="glass"]{
+    background:
+        linear-gradient(rgba(15,23,42,0.38), rgba(15,23,42,0.38)),
+        var(--popup-bg);
+    background-blend-mode:normal, screen;
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:12px;
+    clip-path:none;
+    backdrop-filter:blur(10px);
+    box-shadow:0 18px 48px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+
+#finishBanner[data-popup-style="curve_dark"]{
+    border-left:2px solid rgba(255,255,255,0.45);
+    border-right:9px solid var(--style-accent-color);
+    border-top:0;
+    border-bottom:0;
+    clip-path:polygon(0 0, calc(100% - 28px) 0, 100% 50%, calc(100% - 28px) 100%, 0 100%);
+}
+
+#finishBanner[data-popup-style="curve_light"]{
+    border:0;
+    border-radius:22px;
+    clip-path:none;
+    background:rgba(30,41,59,0.84);
+    box-shadow:0 12px 28px rgba(0,0,0,0.7);
+    overflow:hidden;
+}
+
+#finishBanner[data-popup-style="scoreboard"]{
+    background:var(--table-header-bg);
+    border:2px solid #071e22;
+    border-radius:0;
+    clip-path:none;
+    color:var(--popup-text-color);
+    box-shadow:0 10px 28px rgba(0,0,0,0.65);
+}
+
+#finishBanner[data-popup-animation="none"]{
+    transition:none;
+}
+
+#finishBanner[data-popup-animation="smooth"]{
+    transition:0.7s cubic-bezier(.2,.8,.2,1);
+}
+
+#finishBanner.show[data-popup-animation="pop"]{
+    animation:popupPop 0.4s ease;
+}
+
+#finishBanner.show[data-popup-animation="slide"],
+#finishBanner.show[data-popup-animation="slide_io"]{
+    animation:popupSlide 0.42s cubic-bezier(.2,.8,.2,1);
+}
+
+#finishBanner.show[data-popup-animation="fade_io"]{
+    animation:popupFade 0.42s ease;
+}
+
+@keyframes popupPop{
+    0%{ transform:translateX(-50%) scale(calc(var(--popup-scale) * 0.88)); filter:brightness(1.5); }
+    100%{ transform:translateX(-50%) scale(var(--popup-scale)); filter:brightness(1); }
+}
+
+@keyframes popupSlide{
+    0%{ transform:translateX(-50%) translateY(-35px) scale(var(--popup-scale-hidden)); opacity:0; }
+    100%{ transform:translateX(-50%) translateY(0) scale(var(--popup-scale)); opacity:1; }
+}
+
+@keyframes popupFade{
+    0%{ opacity:0; filter:brightness(1.4); }
+    100%{ opacity:1; filter:brightness(1); }
+}
+
+/* LEFT LOGO */
+.left-box{
+    background:#f1f5f9;
+    padding:0px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    box-shadow:inset -4px 0 12px rgba(0,0,0,0.4);
+}
+
+.left-box img{
+    width:162px;
+    height:162px;
+}
+
+/* RIGHT */
+.right-box{
+    display:flex;
+    flex-direction:column;
+}
+
+/* ðŸ”¥ COMMON ANGLED BAR */
+.angled{
+    position:relative;
+    padding:10px 35px 10px 16px;
+}
+
+/* FIN */
+.top-row{
+    background:var(--popup-bg);
+    z-index:3;
+}
+
+.fin-text{
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:1px;
+}
+
+/* TEAM */
+.team-name{
+    background:linear-gradient(90deg,#0f172a,#1e293b);
+    font-size:22px;
+    font-weight:700;
+    margin-top:-8px;
+    z-index:2;
+}
+
+/* ELIMINATED */
+.status{
+    background:var(--popup-bg);
+    padding:12px 18px;
+    font-size:44px;
+    font-weight:900;
+    letter-spacing:2px;
+    margin-top:-8px;
+}
+
+/* ================= TABLE ================= */
+.container{
+    position:absolute;
+    right:20px;
+    bottom:10px;
+
+    width:var(--table-width);
+
+    backdrop-filter: blur(10px);
+    border:1px solid rgba(0,255,200,0.15);
+
+    box-shadow:
+        0 10px 40px rgba(0,0,0,0.8),
+        0 0 20px rgba(0,255,200,0.1);
+
+    border-radius:10px;
+    overflow:hidden;
+}
+
+#tableWrapper{
+    opacity:1;
+    visibility:visible;
+    transition:opacity 320ms ease, visibility 0s linear 0s;
+    will-change:opacity;
+}
+
+#tableWrapper[data-visible="false"]{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+    transition:opacity 320ms ease, visibility 0s linear 320ms;
+}
+
+/* Visibility is opacity-only until its fade has finished: OBS receives a
+   stable transparent frame instead of display toggling/flicker. */
+#tableWrapper[data-visible="true"]{ pointer-events:auto; }
+
+body[data-table-font="story_script"]{ --overlay-font:'Story Script', cursive; }
+body[data-table-font="lobster"]{ --overlay-font:'Lobster', cursive; }
+body[data-table-font="asset"]{ --overlay-font:'Asset', serif; }
+body[data-table-font="ewert"]{ --overlay-font:'Ewert', serif; }
+body[data-table-font="teko"]{ --overlay-font:'Teko', sans-serif; }
+body[data-table-font="oswald"]{ --overlay-font:'Oswald', sans-serif; }
+body[data-table-font="orbitron"]{ --overlay-font:'Orbitron', sans-serif; }
+body[data-table-font="barlow"]{ --overlay-font:'Barlow Condensed', sans-serif; }
+body[data-header-font="rajdhani"]{ --header-font:'Rajdhani', sans-serif; }
+body[data-header-font="teko"]{ --header-font:'Teko', sans-serif; }
+body[data-header-font="oswald"]{ --header-font:'Oswald', sans-serif; }
+body[data-header-font="orbitron"]{ --header-font:'Orbitron', sans-serif; }
+body[data-header-font="barlow"]{ --header-font:'Barlow Condensed', sans-serif; }
+body[data-header-font="story_script"]{ --header-font:'Story Script', cursive; }
+body[data-header-font="lobster"]{ --header-font:'Lobster', cursive; }
+body[data-match-font="rajdhani"]{ --match-font:'Rajdhani', sans-serif; }
+body[data-match-font="teko"]{ --match-font:'Teko', sans-serif; }
+body[data-match-font="oswald"]{ --match-font:'Oswald', sans-serif; }
+body[data-match-font="orbitron"]{ --match-font:'Orbitron', sans-serif; }
+body[data-match-font="barlow"]{ --match-font:'Barlow Condensed', sans-serif; }
+body[data-match-font="story_script"]{ --match-font:'Story Script', cursive; }
+body[data-match-font="lobster"]{ --match-font:'Lobster', cursive; }
+
+/* ðŸ”¥ MATCH BAR (ONLY ADDITION) */
+#matchBar{
+    display:flex;
+    align-items:stretch;
+    justify-content:flex-start;
+    gap:0;
+    text-align:left;
+    font-weight:800;
+
+    min-height:44px;
+    padding:0;
+
+    background:var(--table-header-bg);
+    border-bottom:0;
+
+    clip-path:none;
+
+    width:100%;   /* important */
+    box-sizing:border-box;
+}
+
+/* ALIVE COUNTERS (ONLY ADDITION) */
+#matchCounters{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    width:100%;
+    box-sizing:border-box;
+    min-height:var(--counter-bar-height);
+    padding:4px 12px;
+    background:var(--counter-bg);
+    color:var(--counter-text-color);
+    font-weight:800;
+    border-bottom:1px solid rgba(255,255,255,0.18);
+}
+#matchCounters[data-visible="false"]{
+    display:none;
+}
+.counter-item{
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+.counter-label{
+    font-size:10px;
+    letter-spacing:1px;
+    opacity:0.85;
+}
+.counter-value{
+    font-size:15px;
+    min-width:20px;
+    text-align:center;
+}
+
+.header{
+    display:grid;
+    grid-template-columns:30px 1fr 28px 25px 30px 40px;
+    background:var(--table-header-bg);
+    min-height:var(--table-header-height, var(--table-row-height));
+    font-family:var(--header-font, var(--overlay-font));
+    align-items:center;
+    padding:0 var(--table-row-pad-x);
+    font-size:var(--table-header-font-size);
+    border-top:1px solid rgba(255,255,255,0.18);
+}
+
+#matchText{
+    font-family:var(--match-font, var(--overlay-font));
+    flex:0 0 74px;
+    min-width:74px;
+    height:44px;
+    display:grid;
+    align-content:start;
+    text-align:left;
+    padding:4px 6px 4px 12px;
+    box-sizing:border-box;
+}
+
+#mapImage{
+    width:130px;
+    height:auto;
+    object-fit:cover;
+    object-position:center;
+    border-left:1px solid rgba(255,255,255,0.35);
+    border-right:1px solid rgba(255,255,255,0.25);
+    margin-right:0;
+    margin-top:0;
+    align-self:stretch;
+}
+
+#mapText{
+    flex:1 1 auto;
+    min-width:0;
+    color:var(--map-text-color);
+    font-weight:900;
+    font-size:18px;
+    line-height:1.05;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    overflow:hidden;
+    display:grid;
+    align-content:start;
+    text-align:left;
+    align-self:stretch;
+    padding:4px 8px;
+    box-sizing:border-box;
+    text-shadow:0 0 5px rgba(0,0,0,0.75);
+}
+
+.row{
+    display:grid;
+    grid-template-columns:18px 1fr 28px 25px 30px 40px;
+    align-items:center;
+    min-height:var(--table-row-height);
+    padding:0 var(--table-row-pad-x);
+    font-size:var(--table-row-font-size);
+    transition:transform 0.45s cubic-bezier(.2,.8,.2,1), opacity 0.35s ease, filter 0.35s ease;
+    will-change:transform, opacity;
+    border-bottom:var(--row-divider-width) solid rgba(255,255,255,0.18);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.row:nth-child(even){ background:linear-gradient(100deg,#111827,#030712); }
+.row:nth-child(odd){ background:linear-gradient(100deg,#172033,#07101f); }
+
+.row.alive{
+    background:var(--alive-team-bg);
+}
+
+.row.finished{
+    background:var(--finished-team-bg) !important;
+    opacity:0.8;
+}
+
+.team{
+    display:flex;
+    align-items:center;
+    gap:3px;
+}
+
+.logo{
+    width:var(--table-logo-size);
+    height:var(--table-logo-size);
+    border:2px solid white;
+    border-radius:5px;
+}
+
+/* ALIGN */
+[data-col="chicken"],
+[data-col="kills"],
+[data-col="total"]{
+    text-align:center;
+}
+
+[data-col="status"]{
+    text-align:right;
+}
+
+/* HEADER NUDGE (click title -> arrow keys move it) */
+.header [data-col]{cursor:move;}
+.header [data-col].d4t-header-selected{outline:2px dashed #ffd400;outline-offset:-2px;}
+#d4tNudgeHint{position:fixed;right:8px;bottom:8px;z-index:99999;background:rgba(0,0,0,.78);color:#ffd400;font:12px/1.5 monospace;padding:6px 10px;border-radius:6px;pointer-events:none;display:none;white-space:pre;}
+.row [data-col="logo"]{display:flex;align-items:center;justify-content:center;}
+.header [data-col="logo"]{font-size:.72em;opacity:.85;}
+
+.chicken-head{
+    font-size:15px;
+    line-height:1;
+    filter:drop-shadow(0 0 4px rgba(255,215,0,0.7));
+}
+
+/* ALIVE BARS */
+.alive-box{
+    display:flex;
+    justify-content:flex-end;
+    gap:var(--status-bar-gap);
+}
+
+.bar{
+    width:var(--status-bar-width);
+    height:var(--status-bar-height);
+    border-radius:var(--status-bar-radius);
+    transition:width var(--status-bar-animation-speed) ease, height var(--status-bar-animation-speed) ease, border-radius var(--status-bar-animation-speed) ease, background var(--status-bar-animation-speed) ease;
+    background:var(--status-bar-finished);
+}
+.bar.active{
+    background:linear-gradient(180deg,#65ffd0 0%,var(--status-bar-active) 100%);
+}
+.row.finished .bar{
+    background:var(--status-bar-finished);
+}
+
+.container[data-data-color-mode="split"] .row [data-col="rank"],
+.container[data-data-color-mode="split"] .row [data-col="team"]{
+    height:100%;
+    display:flex;
+    align-items:center;
+    background:var(--data-left-bg);
+}
+
+.container[data-data-color-mode="split"] .row [data-col="chicken"],
+.container[data-data-color-mode="split"] .row [data-col="kills"],
+.container[data-data-color-mode="split"] .row [data-col="total"],
+.container[data-data-color-mode="split"] .row [data-col="status"]{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--data-right-bg);
+}
+
+.container[data-data-color-mode="split"] .row [data-col="rank"],
+.container[data-data-color-mode="split"] .row [data-col="team"]{
+    color:var(--data-left-font-color);
+}
+
+.container[data-data-color-mode="split"] .row [data-col="chicken"],
+.container[data-data-color-mode="split"] .row [data-col="kills"],
+.container[data-data-color-mode="split"] .row [data-col="total"],
+.container[data-data-color-mode="split"] .row [data-col="status"]{
+    color:var(--data-right-font-color);
+}
+
+.container[data-data-color-mode="split"] .row [data-col="rank"]{
+    justify-content:center;
+}
+
+.container[data-data-color-mode="split"] .row [data-col="status"]{
+    justify-content:flex-end;
+}
+
+/* ANIMATION */
+.row.flash{
+    animation:flashRed 0.6s;
+}
+@keyframes flashRed{
+    0%{background:red;}
+    100%{background:#020617;}
+}
+
+.row.out{
+    transform:translateX(400px);
+    opacity:0;
+}
+
+.container[data-animation="fade_io"] .row.out{
+    transform:none;
+    opacity:0;
+}
+
+.container[data-animation="slide_io"] .row.out{
+    transform:translateX(420px);
+    opacity:0;
+}
+
+.container[data-table-style="bgmi"]{
+    border:2px solid rgba(245,158,11,0.75);
+    border-radius:4px;
+    box-shadow:0 0 24px rgba(245,158,11,0.35), 0 12px 36px rgba(0,0,0,0.85);
+}
+.container[data-table-style="bgmi"] #matchBar{
+    background:var(--table-header-bg);
+    clip-path:none;
+}
+.container[data-table-style="bgmi"] .header{
+    background:var(--table-header-bg);
+    color:#fde68a;
+}
+
+.container[data-table-style="neon"]{
+    border:1px solid var(--style-accent-color);
+    border-radius:12px;
+    backdrop-filter:blur(10px);
+    box-shadow:0 18px 48px rgba(0,0,0,0.75), 0 0 18px var(--style-accent-color), inset 0 0 18px var(--style-accent-soft);
+}
+.container[data-table-style="neon"] #matchBar,
+.container[data-table-style="neon"] .header{
+    background:var(--table-header-bg);
+    color:var(--style-accent-color);
+}
+.container[data-table-style="neon"] .row{
+    border-bottom:1px solid var(--style-accent-soft);
+}
+
+.container[data-table-style="compact"]{
+    width:310px;
+    border-radius:3px;
+}
+.container[data-table-style="compact"] #matchBar{
+    padding:4px 12px;
+    clip-path:none;
+}
+.container[data-table-style="compact"] .header{
+    padding:6px;
+    font-size:10px;
+}
+.container[data-table-style="compact"] .row{
+    padding:5px 6px;
+    font-size:12px;
+}
+.container[data-table-style="compact"] .logo{
+    width:15px;
+    height:15px;
+}
+
+.container[data-table-style="glass"]{
+    background:
+        linear-gradient(rgba(15,23,42,0.38), rgba(15,23,42,0.38)),
+        var(--alive-team-bg);
+    background-blend-mode:normal, screen;
+    border:1px solid rgba(255,255,255,0.28);
+    border-radius:12px;
+    box-shadow:0 18px 48px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.container[data-table-style="glass"] #matchBar,
+.container[data-table-style="glass"] .header{
+    background:var(--table-header-bg);
+    clip-path:none;
+}
+.container[data-table-style="glass"] .row{
+    margin:3px;
+    border-radius:6px;
+    background:
+        linear-gradient(rgba(15,23,42,0.28), rgba(15,23,42,0.28)),
+        var(--alive-team-bg);
+    background-blend-mode:normal, screen;
+}
+.container[data-table-style="glass"] .row.finished{
+    background:
+        linear-gradient(rgba(15,23,42,0.28), rgba(15,23,42,0.28)),
+        var(--finished-team-bg) !important;
+    background-blend-mode:normal, screen;
+}
+
+.container[data-table-style="curve_dark"]{
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+    overflow:visible;
+}
+.container[data-table-style="curve_dark"] #matchBar{
+    background:var(--table-header-bg);
+    color:var(--table-font-color);
+    clip-path:polygon(0 0, 97% 0, 100% 50%, 97% 100%, 0 100%);
+}
+.container[data-table-style="curve_dark"] .header{
+    background:var(--table-header-bg);
+    color:var(--table-font-color);
+    clip-path:polygon(0 0, 97% 0, 100% 50%, 97% 100%, 0 100%);
+    border-top:0;
+}
+.container[data-table-style="curve_dark"] .row{
+    margin:4px 10px 4px 0;
+    background:var(--alive-team-bg);
+    color:var(--table-font-color);
+    border-left:2px solid rgba(255,255,255,0.45);
+    border-right:7px solid var(--style-accent-color);
+    clip-path:polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%);
+    box-shadow:0 3px 0 rgba(167,243,208,0.25);
+}
+.container[data-table-style="curve_dark"] .row.alive{
+    background:var(--alive-team-bg);
+}
+.container[data-table-style="curve_dark"] .row.finished{
+    background:var(--finished-team-bg) !important;
+}
+.container[data-table-style="curve_dark"] .logo{
+    border-radius:2px;
+}
+
+.container[data-table-style="curve_light"]{
+    border:0;
+    border-radius:18px;
+    background:rgba(30,41,59,0.84);
+    padding:5px 4px 8px;
+    box-shadow:0 12px 28px rgba(0,0,0,0.7);
+}
+.container[data-table-style="curve_light"] #matchBar{
+    border-radius:14px 14px 6px 6px;
+    overflow:hidden;
+    clip-path:none;
+}
+.container[data-table-style="curve_light"] .header{
+    background:var(--table-header-bg);
+    color:var(--table-font-color);
+    border-top:0;
+}
+.container[data-table-style="curve_light"] .row{
+    margin:3px 0;
+    border-radius:999px;
+    background:var(--alive-team-bg);
+    color:var(--table-font-color);
+    overflow:hidden;
+}
+.container[data-table-style="curve_light"] .row.alive{
+    background:var(--alive-team-bg);
+}
+.container[data-table-style="curve_light"] .row.finished{
+    background:var(--finished-team-bg) !important;
+    color:var(--table-font-color);
+}
+.container[data-table-style="curve_light"] .bar{
+    width:7px;
+    border-radius:999px;
+}
+.container[data-table-style="curve_light"] .logo{
+    border-color:#64748b;
+    border-radius:999px;
+}
+
+.container[data-table-style="scoreboard"]{
+    background:#f7f7f2;
+    border:2px solid #071e22;
+    border-radius:0;
+    overflow:hidden;
+    box-shadow:0 10px 28px rgba(0,0,0,0.7);
+    color:var(--table-font-color);
+}
+.container[data-table-style="scoreboard"] #matchBar{
+    background:var(--table-header-bg);
+    color:#b8fff1;
+    padding:0;
+    clip-path:none;
+    border-bottom:1px solid #071e22;
+}
+.container[data-table-style="scoreboard"] #matchText,
+.container[data-table-style="scoreboard"] #mapText{
+    align-content:center;
+    text-transform:uppercase;
+}
+.container[data-table-style="scoreboard"] .header{
+    background:var(--table-header-bg);
+    color:#b8fff1;
+    border:0;
+    text-transform:uppercase;
+    font-weight:900;
+}
+.container[data-table-style="scoreboard"] .row{
+    background:var(--alive-team-bg);
+    color:var(--table-font-color);
+    border-bottom:1px solid #c5c9c2;
+    font-weight:900;
+    text-transform:uppercase;
+}
+.container[data-table-style="scoreboard"] .row:nth-child(even){
+    background:var(--alive-team-bg);
+    filter:brightness(0.92);
+}
+.container[data-table-style="scoreboard"] .row.finished{
+    background:var(--finished-team-bg) !important;
+    opacity:0.9;
+}
+.container[data-table-style="scoreboard"] [data-col="rank"]{
+    color:var(--table-font-color);
+}
+.container[data-table-style="scoreboard"] [data-col="status"],
+.container[data-table-style="scoreboard"] [data-col="chicken"],
+.container[data-table-style="scoreboard"] [data-col="kills"],
+.container[data-table-style="scoreboard"] [data-col="total"]{
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--data-right-bg);
+    color:#ffffff;
+}
+.container[data-table-style="scoreboard"] [data-col="status"]{
+    justify-content:flex-end;
+    padding-right:5px;
+}
+.container[data-table-style="scoreboard"][data-data-color-mode="all"] [data-col="chicken"],
+.container[data-table-style="scoreboard"][data-data-color-mode="all"] [data-col="kills"],
+.container[data-table-style="scoreboard"][data-data-color-mode="all"] [data-col="total"],
+.container[data-table-style="scoreboard"][data-data-color-mode="all"] [data-col="status"]{
+    background:var(--alive-team-bg);
+    color:var(--table-font-color);
+}
+.container[data-table-style="scoreboard"] .team{
+    color:var(--table-font-color);
+    gap:5px;
+}
+.container[data-table-style="scoreboard"] .logo{
+    border:0;
+    border-radius:0;
+    object-fit:contain;
+}
+.container[data-table-style="scoreboard"] .bar{
+    width:5px;
+    background:var(--status-bar-finished);
+}
+.container[data-table-style="scoreboard"] .bar.active{
+    background:var(--status-bar-active);
+}
+.container[data-table-style="scoreboard"] .row.finished .bar{
+    background:var(--status-bar-finished);
+}
+
+.container[data-table-style="modern_glass"]{
+    background:linear-gradient(135deg,rgba(15,23,42,.82),rgba(30,41,59,.52));
+    border:1px solid rgba(226,232,240,.55); border-radius:18px; backdrop-filter:blur(16px);
+    box-shadow:0 18px 48px rgba(2,6,23,.62),inset 0 1px rgba(255,255,255,.2);
+}
+.container[data-table-style="modern_glass"] #matchBar,.container[data-table-style="modern_glass"] .header{background:linear-gradient(90deg,rgba(51,65,85,.92),rgba(71,85,105,.7));clip-path:none;}
+.container[data-table-style="modern_glass"] .row{background:rgba(15,23,42,.58);border-color:rgba(226,232,240,.18);}
+.container[data-table-style="esports_neon_pro"]{border:2px solid #00f6ff;border-radius:2px;box-shadow:0 0 10px #00f6ff,0 0 34px rgba(0,246,255,.48),0 18px 42px rgba(0,0,0,.82);}
+.container[data-table-style="esports_neon_pro"] #matchBar,.container[data-table-style="esports_neon_pro"] .header{background:linear-gradient(90deg,#061b38,#10115b,#310747);clip-path:none;color:#fff;text-shadow:0 0 9px rgba(255,255,255,.75);}
+.container[data-table-style="esports_neon_pro"] .row{background:linear-gradient(90deg,rgba(5,16,39,.96),rgba(15,31,83,.9));border-color:rgba(0,246,255,.58);box-shadow:inset 4px 0 #00f6ff;}
+.container[data-table-style="cyber_dark"]{border:1px solid #a3e635;border-radius:0;background:#070b12;box-shadow:0 0 26px rgba(163,230,53,.22);}
+.container[data-table-style="cyber_dark"] #matchBar,.container[data-table-style="cyber_dark"] .header{background:linear-gradient(90deg,#17230a,#111827);clip-path:none;color:#d9f99d;}
+.container[data-table-style="cyber_dark"] .row{background:linear-gradient(90deg,#0c141c,#111827);border-color:rgba(163,230,53,.24);}
+
+.row.anim-pop{
+    animation:rowPop 0.38s ease;
+}
+@keyframes rowPop{
+    0%{ transform:scale(0.96); filter:brightness(1.7); }
+    100%{ transform:scale(1); filter:brightness(1); }
+}
+.row.anim-slide-io{
+    animation:rowSlideIn 0.42s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes rowSlideIn{
+    0%{ transform:translateX(120px); opacity:0; }
+    100%{ transform:translateX(0); opacity:1; }
+}
+.row.anim-fade-io{
+    animation:rowFadeIn 0.42s ease;
+}
+@keyframes rowFadeIn{
+    0%{ opacity:0; filter:brightness(1.4); }
+    100%{ opacity:1; filter:brightness(1); }
+}
+</style>
+</head>
+
+<body>
+
+<div id="wwcdOverlay" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:999999;background:#000;">
+    <video id="wwcdVideo" style="width:100%;height:100%;object-fit:cover;" muted></video>
+    <img id="wwcdImage" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;" src="">
+</div>
+
+<div class="win-chance" id="winChance"></div>
+<div class="top5" id="top5"></div>
+
+<!-- POPUP -->
+<div id="finishBanner">
+
+    <div class="left-box">
+        <img id="popupLogo" src="">
+    </div>
+
+    <div class="right-box">
+        <div class="top-row angled">
+            <div class="fin-text" id="popupKill">0 FINISHES</div>
+        </div>
+
+        <div class="team-name angled" id="popupTeam">TEAM</div>
+
+        <div class="status">ELIMINATED</div>
+    </div>
+
+</div>
+
+<div id="tableWrapper">
+<div class="container">
+
+    <!-- ALIVE COUNTERS -->
+    <div id="matchCounters" data-visible="true">
+        <div class="counter-item">
+            <span class="counter-label">PLAYERS</span>
+            <span class="counter-value" id="alivePlayersCount">0</span>
+        </div>
+        <div class="counter-item">
+            <span class="counter-label">TEAMS</span>
+            <span class="counter-value" id="aliveTeamsCount">0</span>
+        </div>
+    </div>
+
+    <!-- MATCH BAR -->
+    <div id="matchBar">
+        <span id="matchText"></span>
+        <img id="mapImage" src="" alt="">
+        <span id="mapText"></span>
+    </div>
+
+    <div class="header">
+        <div data-col="rank">#</div>
+        <div data-col="logo"></div>
+        <div data-col="team">TEAM</div>
+        <div data-col="chicken" class="chicken-head">&#128020;</div>
+        <div data-col="kills">FIN</div>
+        <div data-col="total">T P </div>
+        <div data-col="status">STATUS</div>
+    </div>
+
+    <div id="teams"></div>
+</div>
+</div>
+
+<script>
+
+const DEFAULT_KEY_HASH = "4616145c6587514d9ac9e65c39beaca76e40baf7d182dd7d5de92dbfea304676";
+
+function readOverlayKey(){
+    let searchParams = new URLSearchParams(window.location.search || "");
+    let key = searchParams.get("key");
+    if(key) return key.trim();
+
+    let hash = (window.location.hash || "").replace(/^#/, "").trim();
+    if(hash){
+        let hashParams = new URLSearchParams(hash.replace(/^\?/, ""));
+        key = hashParams.get("key") || hashParams.get("customer") || hashParams.get("customer_key");
+        if(key) return key.trim();
+        if(/^[a-f0-9]{32,128}$/i.test(hash)) return hash;
+    }
+
+    return DEFAULT_KEY_HASH;
+}
+
+const KEY_HASH = readOverlayKey();
+
+const SERVER_URL = "https://overlay-server-in1h.onrender.com";
+const IS_FILE_OVERLAY = window.location.protocol === "file:";
+const IS_LOCAL_OVERLAY = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+const API_BASE_URL = IS_LOCAL_OVERLAY
+    ? "/live.json"
+    : KEY_HASH
+    ? `${SERVER_URL}/data/${KEY_HASH}`
+    : `${SERVER_URL}/data`;
+const FINISH_POPUP_STORAGE_KEY = "d4t_finish_popups_v1";
+let lastFinished = null;
+let shownFinishedTeams = loadShownFinishedTeams();
+let popupQueue = [];
+let popupPlaying = false;
+let currentMatchNo = null;
+let lastRenderedSignature = "";
+let lastValidOverlayLayout = null;
+const defaultOverlayLayout = {
+    table_x: "right",
+    table_y: "bottom",
+    top5_x: "center",
+    top5_y: "top",
+    top5_orientation: "horizontal",
+    win_chance_offset_x: 0,
+    win_chance_offset_y: 0,
+    popup_offset_x: 0,
+    popup_offset_y: 0,
+    offset_x: 0,
+    offset_y: 0,
+    top5_offset_x: 0,
+    top5_offset_y: 0,
+    table_width: 320,
+    table_row_height: 34,
+    table_text_size: 13,
+    table_header_text_size: 12,
+    table_logo_size: 22,
+    table_bar_height: 14,
+    status_bar_width: 10,
+    status_bar_gap: 2,
+    status_bar_height: 14,
+    status_bar_radius: 2,
+    status_bar_animation_speed: 450,
+    row_border_thickness: 1,
+    row_divider_width: 1,
+    table_col_rank_width: 22,
+    table_col_team_width: 220,
+    table_col_chicken_width: 30,
+    table_col_kills_width: 30,
+    table_col_total_width: 32,
+    table_col_status_width: 45,
+    table_col_rank_align: "left",
+    table_col_team_align: "left",
+    table_col_chicken_align: "center",
+    table_col_kills_align: "center",
+    table_col_total_align: "center",
+    table_col_status_align: "right",
+    table_col_logo_width: 34,
+    show_logo: true,
+    debug_overlay_layout: false,
+    top5_scale: 100,
+    popup_scale: 100,
+    animation_style: "slide",
+    top5_animation_style: "slide",
+    popup_animation_style: "slide",
+    table_style: "current",
+    top5_style: "current",
+    popup_style: "current",
+    table_font_style: "rajdhani",
+    table_header_height: 34,
+    header_font_style: "rajdhani",
+    match_font_style: "rajdhani",
+    alive_color: "linear-gradient(100deg,#21004b 0%,#6d28d9 52%,#3b0764 100%)",
+    finished_color: "linear-gradient(100deg,#111827 0%,#030712 100%)",
+    header_color: "linear-gradient(100deg,#c084fc 0%,#7c3aed 48%,#4c1d95 100%)",
+    font_color: "#ffffff",
+    table_font_left_color: "#ffffff",
+    table_font_right_color: "#ffffff",
+    status_bar_color: "#00ff9d",
+    finished_status_bar_color: "#ef4444",
+    top5_color: "linear-gradient(90deg,rgba(57, 0, 117, 1) 0%, rgba(89, 0, 153, 1) 52%, rgba(75, 0, 130, 1) 100%)",
+    popup_color: "linear-gradient(90deg,#7c3aed,#9333ea)",
+    data_left_color: "#f7f7f2",
+    data_right_color: "#08272a",
+    data_color_mode: "all",
+    map_text: "",
+    side_text: "",
+    map_text_color: "#ffffff",
+    map_text_size: 18,
+    map_text_height: 40,
+    match_text_size: 18,
+    popup_text_color: "#ffffff",
+    top5_text_color: "#ffffff",
+    style_color: "#22d3ee",
+    map_text_align: "left",
+    map_text_valign: "top",
+    match_text_align: "left",
+    match_text_valign: "top",
+    show_header: true,
+    show_match_counters: true,
+    counter_color: "#1e1b4b",
+    counter_text_color: "#ffffff",
+    counter_bar_height: 34,
+    show_win_chance: true,
+    table_visible: true,
+    auto_hide_table_top4: false,
+    show_rank: true,
+    show_team: true,
+    show_chicken: true,
+    show_kills: true,
+    show_total: true,
+    show_status: true,
+    map_name: "Erangel",
+    map_image: "data/map/Erangel.png"
+};
+
+const tableColumns = [
+    { field: "show_rank", col: "rank", widthKey: "table_col_rank_width", alignKey: "table_col_rank_align" },
+    { field: "show_logo", col: "logo", widthKey: "table_col_logo_width" },
+    { field: "show_team", col: "team", widthKey: "table_col_team_width", alignKey: "table_col_team_align" },
+    { field: "show_chicken", col: "chicken", widthKey: "table_col_chicken_width", alignKey: "table_col_chicken_align" },
+    { field: "show_kills", col: "kills", widthKey: "table_col_kills_width", alignKey: "table_col_kills_align" },
+    { field: "show_total", col: "total", widthKey: "table_col_total_width", alignKey: "table_col_total_align" },
+    { field: "show_status", col: "status", widthKey: "table_col_status_width", alignKey: "table_col_status_align" }
+];
+
+function layoutBool(layout, key){
+    if(Object.prototype.hasOwnProperty.call(layout, key)){
+        let value = layout[key];
+        if(typeof value === "boolean") return value;
+        if(typeof value === "string") return !["0", "false", "no", "off", "hide", "hidden"].includes(value.toLowerCase());
+        return !!value;
+    }
+    return defaultOverlayLayout[key];
+}
+
+function normalizeLayout(layout){
+    layout = layout || {};
+    let tableX = String(layout.table_x || defaultOverlayLayout.table_x).toLowerCase();
+    let tableY = String(layout.table_y || defaultOverlayLayout.table_y).toLowerCase();
+    let top5X = String(layout.top5_x || defaultOverlayLayout.top5_x).toLowerCase();
+    let top5Y = String(layout.top5_y || defaultOverlayLayout.top5_y).toLowerCase();
+    let top5Orientation = String(layout.top5_orientation || defaultOverlayLayout.top5_orientation).toLowerCase();
+    let offsetX = parseInt(layout.offset_x || defaultOverlayLayout.offset_x, 10);
+    let offsetY = parseInt(layout.offset_y || defaultOverlayLayout.offset_y, 10);
+    let top5OffsetX = parseInt(layout.top5_offset_x || defaultOverlayLayout.top5_offset_x, 10);
+    let top5OffsetY = parseInt(layout.top5_offset_y || defaultOverlayLayout.top5_offset_y, 10);
+    let winChanceOffsetX = parseInt(layout.win_chance_offset_x || defaultOverlayLayout.win_chance_offset_x, 10);
+    let winChanceOffsetY = parseInt(layout.win_chance_offset_y || defaultOverlayLayout.win_chance_offset_y, 10);
+    let popupOffsetX = parseInt(layout.popup_offset_x || defaultOverlayLayout.popup_offset_x, 10);
+    let popupOffsetY = parseInt(layout.popup_offset_y || defaultOverlayLayout.popup_offset_y, 10);
+    let tableWidth = parseInt(layout.table_width || defaultOverlayLayout.table_width, 10);
+    let tableRowHeight = parseInt(layout.table_row_height || defaultOverlayLayout.table_row_height, 10);
+    let tableTextSize = parseInt(layout.table_text_size || defaultOverlayLayout.table_text_size, 10);
+    let tableHeaderTextSize = parseInt(layout.table_header_text_size || defaultOverlayLayout.table_header_text_size, 10);
+    let tableLogoSize = parseInt(layout.table_logo_size || defaultOverlayLayout.table_logo_size, 10);
+    let tableBarHeight = parseInt(layout.table_bar_height || defaultOverlayLayout.table_bar_height, 10);
+    let statusBarWidth = parseInt(layout.status_bar_width ?? defaultOverlayLayout.status_bar_width, 10);
+    let statusBarGap = parseInt(layout.status_bar_gap ?? defaultOverlayLayout.status_bar_gap, 10);
+    let statusBarHeight = parseInt(layout.status_bar_height ?? defaultOverlayLayout.status_bar_height, 10);
+    let statusBarRadius = parseInt(layout.status_bar_radius ?? defaultOverlayLayout.status_bar_radius, 10);
+    let statusBarAnimationSpeed = parseInt(layout.status_bar_animation_speed ?? defaultOverlayLayout.status_bar_animation_speed, 10);
+    let rowBorderThickness = parseInt(layout.row_border_thickness ?? defaultOverlayLayout.row_border_thickness, 10);
+    let rowDividerWidth = parseInt(layout.row_divider_width ?? defaultOverlayLayout.row_divider_width, 10);
+    let columnWidths = Object.fromEntries(tableColumns.map(column => [column.widthKey, parseInt(layout[column.widthKey] ?? defaultOverlayLayout[column.widthKey], 10)]));
+    let columnAligns = Object.fromEntries(tableColumns.map(column => [column.alignKey, String(layout[column.alignKey] ?? defaultOverlayLayout[column.alignKey]).toLowerCase()]));
+    let top5Scale = parseInt(layout.top5_scale || defaultOverlayLayout.top5_scale, 10);
+    let popupScale = parseInt(layout.popup_scale || defaultOverlayLayout.popup_scale, 10);
+    let animationStyle = String(layout.animation_style || defaultOverlayLayout.animation_style).toLowerCase();
+    let top5AnimationStyle = String(layout.top5_animation_style || layout.animation_style || defaultOverlayLayout.top5_animation_style).toLowerCase();
+    let popupAnimationStyle = String(layout.popup_animation_style || layout.animation_style || defaultOverlayLayout.popup_animation_style).toLowerCase();
+    let tableStyle = String(layout.table_style || defaultOverlayLayout.table_style).toLowerCase();
+    let top5Style = String(layout.top5_style || layout.table_style || defaultOverlayLayout.top5_style).toLowerCase();
+    let popupStyle = String(layout.popup_style || layout.table_style || defaultOverlayLayout.popup_style).toLowerCase();
+    let tableFontStyle = String(layout.table_font_style || defaultOverlayLayout.table_font_style).toLowerCase();
+    let headerFontStyle = String(layout.header_font_style || defaultOverlayLayout.header_font_style).toLowerCase();
+    let matchFontStyle = String(layout.match_font_style || defaultOverlayLayout.match_font_style).toLowerCase();
+    let tableHeaderHeight = parseInt(layout.table_header_height ?? defaultOverlayLayout.table_header_height, 10);
+    let aliveColor = String(layout.alive_color || defaultOverlayLayout.alive_color);
+    let finishedColor = String(layout.finished_color || defaultOverlayLayout.finished_color);
+    let headerColor = String(layout.header_color || defaultOverlayLayout.header_color);
+    let fontColor = String(layout.font_color || defaultOverlayLayout.font_color);
+    let tableFontLeftColor = String(layout.table_font_left_color || defaultOverlayLayout.table_font_left_color);
+    let tableFontRightColor = String(layout.table_font_right_color || defaultOverlayLayout.table_font_right_color);
+    let statusBarColor = String(layout.status_bar_color || defaultOverlayLayout.status_bar_color);
+    let finishedStatusBarColor = String(layout.finished_status_bar_color || defaultOverlayLayout.finished_status_bar_color);
+    let top5Color = String(layout.top5_color || defaultOverlayLayout.top5_color);
+    let popupColor = String(layout.popup_color || defaultOverlayLayout.popup_color);
+    let dataLeftColor = String(layout.data_left_color || defaultOverlayLayout.data_left_color);
+    let dataRightColor = String(layout.data_right_color || defaultOverlayLayout.data_right_color);
+    let dataColorMode = String(layout.data_color_mode || defaultOverlayLayout.data_color_mode).toLowerCase();
+    let mapText = String(layout.map_text || defaultOverlayLayout.map_text);
+    let sideText = String(layout.side_text || layout.map_text || defaultOverlayLayout.side_text);
+    let mapTextColor = String(layout.map_text_color || defaultOverlayLayout.map_text_color);
+    let mapTextSize = parseInt(layout.map_text_size || defaultOverlayLayout.map_text_size, 10);
+    let mapTextHeight = parseInt(layout.map_text_height || defaultOverlayLayout.map_text_height, 10);
+    let matchTextSize = parseInt(layout.match_text_size || defaultOverlayLayout.match_text_size, 10);
+    let popupTextColor = String(layout.popup_text_color || defaultOverlayLayout.popup_text_color);
+    let top5TextColor = String(layout.top5_text_color || defaultOverlayLayout.top5_text_color);
+    let styleColor = String(layout.style_color || defaultOverlayLayout.style_color);
+    let mapTextAlign = String(layout.map_text_align || defaultOverlayLayout.map_text_align).toLowerCase();
+    let mapTextValign = String(layout.map_text_valign || defaultOverlayLayout.map_text_valign).toLowerCase();
+    let matchTextAlign = String(layout.match_text_align || defaultOverlayLayout.match_text_align).toLowerCase();
+    let matchTextValign = String(layout.match_text_valign || defaultOverlayLayout.match_text_valign).toLowerCase();
+    let showHeader = layoutBool(layout, "show_header");
+    let showMatchCounters = layoutBool(layout, "show_match_counters");
+    let counterColor = String(layout.counter_color || defaultOverlayLayout.counter_color);
+    let counterTextColor = String(layout.counter_text_color || defaultOverlayLayout.counter_text_color);
+    let showWinChance = layoutBool(layout, "show_win_chance");
+    let tableVisible = layoutBool(layout, "table_visible");
+    let autoHideTableTop4 = layoutBool(layout, "auto_hide_table_top4");
+    let debugOverlayLayout = layoutBool(layout, "debug_overlay_layout");
+    let showRank = layoutBool(layout, "show_rank");
+    let showLogo = layoutBool(layout, "show_logo");
+    let showTeam = layoutBool(layout, "show_team");
+    let showChicken = layoutBool(layout, "show_chicken");
+    let showKills = layoutBool(layout, "show_kills");
+    let showTotal = layoutBool(layout, "show_total");
+    let showStatus = layoutBool(layout, "show_status");
+    let mapName = String(layout.map_name || defaultOverlayLayout.map_name);
+    let mapImage = String(layout.map_image || defaultOverlayLayout.map_image);
+
+    if(!["left", "center", "right"].includes(tableX)) tableX = defaultOverlayLayout.table_x;
+    if(!["top", "bottom"].includes(tableY)) tableY = defaultOverlayLayout.table_y;
+    if(!["left", "center", "right"].includes(top5X)) top5X = defaultOverlayLayout.top5_x;
+    if(!["top", "bottom"].includes(top5Y)) top5Y = defaultOverlayLayout.top5_y;
+    if(!["horizontal", "vertical"].includes(top5Orientation)) top5Orientation = defaultOverlayLayout.top5_orientation;
+    if(!["slide", "smooth", "pop", "slide_io", "fade_io", "none"].includes(animationStyle)) animationStyle = defaultOverlayLayout.animation_style;
+    if(!["slide", "smooth", "pop", "slide_io", "fade_io", "none"].includes(top5AnimationStyle)) top5AnimationStyle = defaultOverlayLayout.top5_animation_style;
+    if(!["slide", "smooth", "pop", "slide_io", "fade_io", "none"].includes(popupAnimationStyle)) popupAnimationStyle = defaultOverlayLayout.popup_animation_style;
+    if(!["current", "bgmi", "neon", "compact", "glass", "curve_dark", "curve_light", "scoreboard"].includes(tableStyle)) tableStyle = defaultOverlayLayout.table_style;
+    if(!["current", "bgmi", "neon", "compact", "glass", "curve_dark", "curve_light", "scoreboard"].includes(top5Style)) top5Style = defaultOverlayLayout.top5_style;
+    if(!["current", "bgmi", "neon", "compact", "glass", "curve_dark", "curve_light", "scoreboard"].includes(popupStyle)) popupStyle = defaultOverlayLayout.popup_style;
+    if(!["rajdhani", "teko", "oswald", "orbitron", "barlow", "story_script", "lobster", "asset", "ewert"].includes(tableFontStyle)) tableFontStyle = defaultOverlayLayout.table_font_style;
+    if(!["rajdhani", "teko", "oswald", "orbitron", "barlow", "story_script", "lobster", "asset", "ewert"].includes(headerFontStyle)) headerFontStyle = defaultOverlayLayout.header_font_style;
+    if(!["rajdhani", "teko", "oswald", "orbitron", "barlow", "story_script", "lobster", "asset", "ewert"].includes(matchFontStyle)) matchFontStyle = defaultOverlayLayout.match_font_style;
+    if(!["all", "split"].includes(dataColorMode)) dataColorMode = defaultOverlayLayout.data_color_mode;
+    if(Number.isNaN(offsetX)) offsetX = defaultOverlayLayout.offset_x;
+    if(Number.isNaN(offsetY)) offsetY = defaultOverlayLayout.offset_y;
+    if(Number.isNaN(top5OffsetX)) top5OffsetX = defaultOverlayLayout.top5_offset_x;
+    if(Number.isNaN(top5OffsetY)) top5OffsetY = defaultOverlayLayout.top5_offset_y;
+    if(Number.isNaN(winChanceOffsetX)) winChanceOffsetX = defaultOverlayLayout.win_chance_offset_x;
+    if(Number.isNaN(winChanceOffsetY)) winChanceOffsetY = defaultOverlayLayout.win_chance_offset_y;
+    if(Number.isNaN(popupOffsetX)) popupOffsetX = defaultOverlayLayout.popup_offset_x;
+    if(Number.isNaN(popupOffsetY)) popupOffsetY = defaultOverlayLayout.popup_offset_y;
+    if(Number.isNaN(tableWidth)) tableWidth = defaultOverlayLayout.table_width;
+    if(Number.isNaN(tableRowHeight)) tableRowHeight = defaultOverlayLayout.table_row_height;
+    if(Number.isNaN(tableTextSize)) tableTextSize = defaultOverlayLayout.table_text_size;
+    if(Number.isNaN(tableHeaderTextSize)) tableHeaderTextSize = defaultOverlayLayout.table_header_text_size;
+    if(Number.isNaN(tableLogoSize)) tableLogoSize = defaultOverlayLayout.table_logo_size;
+    if(Number.isNaN(tableBarHeight)) tableBarHeight = defaultOverlayLayout.table_bar_height;
+    if(Number.isNaN(statusBarWidth)) statusBarWidth = defaultOverlayLayout.status_bar_width;
+    if(Number.isNaN(statusBarGap)) statusBarGap = defaultOverlayLayout.status_bar_gap;
+    if(Number.isNaN(statusBarHeight)) statusBarHeight = defaultOverlayLayout.status_bar_height;
+    if(Number.isNaN(statusBarRadius)) statusBarRadius = defaultOverlayLayout.status_bar_radius;
+    if(Number.isNaN(statusBarAnimationSpeed)) statusBarAnimationSpeed = defaultOverlayLayout.status_bar_animation_speed;
+    if(Number.isNaN(rowBorderThickness)) rowBorderThickness = defaultOverlayLayout.row_border_thickness;
+    if(Number.isNaN(rowDividerWidth)) rowDividerWidth = defaultOverlayLayout.row_divider_width;
+    if(Number.isNaN(top5Scale)) top5Scale = defaultOverlayLayout.top5_scale;
+    if(Number.isNaN(popupScale)) popupScale = defaultOverlayLayout.popup_scale;
+    if(Number.isNaN(mapTextSize)) mapTextSize = defaultOverlayLayout.map_text_size;
+    if(Number.isNaN(mapTextHeight)) mapTextHeight = defaultOverlayLayout.map_text_height;
+    if(Number.isNaN(matchTextSize)) matchTextSize = defaultOverlayLayout.match_text_size;
+    tableWidth = Math.max(240, Math.min(560, tableWidth));
+    tableRowHeight = Math.max(24, Math.min(62, tableRowHeight));
+    statusBarWidth = Math.max(10, Math.min(100, statusBarWidth));
+    statusBarGap = Math.max(0, Math.min(20, statusBarGap));
+    rowBorderThickness = Math.max(0, Math.min(8, rowBorderThickness));
+    statusBarHeight = Math.max(4, Math.min(40, statusBarHeight));
+    statusBarRadius = Math.max(0, Math.min(20, statusBarRadius));
+    statusBarAnimationSpeed = Math.max(0, Math.min(3000, statusBarAnimationSpeed));
+    rowDividerWidth = Math.max(0, Math.min(8, rowDividerWidth));
+    tableTextSize = Math.max(8, Math.min(36, tableTextSize));
+    tableHeaderTextSize = Math.max(8, Math.min(28, tableHeaderTextSize));
+    tableLogoSize = Math.max(12, Math.min(44, tableLogoSize));
+    tableBarHeight = Math.max(4, Math.min(40, tableBarHeight));
+    Object.keys(columnWidths).forEach(key => {
+        if(Number.isNaN(columnWidths[key])) columnWidths[key] = defaultOverlayLayout[key];
+        columnWidths[key] = Math.max(12, Math.min(420, columnWidths[key]));
+    });
+    Object.keys(columnAligns).forEach(key => {
+        if(!["left", "center", "right"].includes(columnAligns[key])) columnAligns[key] = defaultOverlayLayout[key];
+    });
+    top5Scale = Math.max(50, Math.min(180, top5Scale));
+    popupScale = Math.max(50, Math.min(180, popupScale));
+    mapTextSize = Math.max(8, Math.min(64, mapTextSize));
+    matchTextSize = Math.max(8, Math.min(64, matchTextSize));
+    mapTextHeight = Math.max(40, Math.min(180, mapTextHeight));
+    if(!["left", "center", "right"].includes(mapTextAlign)) mapTextAlign = defaultOverlayLayout.map_text_align;
+    if(!["top", "middle", "bottom"].includes(mapTextValign)) mapTextValign = defaultOverlayLayout.map_text_valign;
+    if(!["left", "center", "right"].includes(matchTextAlign)) matchTextAlign = defaultOverlayLayout.match_text_align;
+    if(!["top", "middle", "bottom"].includes(matchTextValign)) matchTextValign = defaultOverlayLayout.match_text_valign;
+
+    return {
+        table_x: tableX,
+        table_y: tableY,
+    top5_x: top5X,
+    top5_y: top5Y,
+    top5_orientation: top5Orientation,
+        offset_x: offsetX,
+        offset_y: offsetY,
+        top5_offset_x: top5OffsetX,
+        top5_offset_y: top5OffsetY,
+        win_chance_offset_x: winChanceOffsetX,
+        win_chance_offset_y: winChanceOffsetY,
+        popup_offset_x: popupOffsetX,
+        popup_offset_y: popupOffsetY,
+        table_width: tableWidth,
+        table_row_height: tableRowHeight,
+        table_text_size: tableTextSize,
+        table_header_text_size: tableHeaderTextSize,
+        table_logo_size: tableLogoSize,
+        table_bar_height: tableBarHeight,
+        status_bar_width: statusBarWidth,
+        status_bar_gap: statusBarGap,
+        status_bar_height: statusBarHeight,
+        status_bar_radius: statusBarRadius,
+        status_bar_animation_speed: statusBarAnimationSpeed,
+        row_border_thickness: rowBorderThickness,
+        row_divider_width: rowDividerWidth,
+        ...columnWidths,
+        ...columnAligns,
+        top5_scale: top5Scale,
+        popup_scale: popupScale,
+        animation_style: animationStyle,
+        top5_animation_style: top5AnimationStyle,
+        popup_animation_style: popupAnimationStyle,
+        table_style: tableStyle,
+        top5_style: top5Style,
+        popup_style: popupStyle,
+        table_font_style: tableFontStyle,
+        header_font_style: headerFontStyle,
+        match_font_style: matchFontStyle,
+        table_header_height: tableHeaderHeight,
+        alive_color: aliveColor,
+        finished_color: finishedColor,
+        header_color: headerColor,
+        font_color: fontColor,
+        table_font_left_color: tableFontLeftColor,
+        table_font_right_color: tableFontRightColor,
+        status_bar_color: statusBarColor,
+        finished_status_bar_color: finishedStatusBarColor,
+        top5_color: top5Color,
+        popup_color: popupColor,
+        data_left_color: dataLeftColor,
+        data_right_color: dataRightColor,
+        data_color_mode: dataColorMode,
+        map_text: mapText,
+        side_text: sideText,
+        map_text_color: mapTextColor,
+        map_text_size: mapTextSize,
+        map_text_height: mapTextHeight,
+        match_text_size: matchTextSize,
+        popup_text_color: popupTextColor,
+        top5_text_color: top5TextColor,
+        style_color: styleColor,
+        map_text_align: mapTextAlign,
+        map_text_valign: mapTextValign,
+        match_text_align: matchTextAlign,
+        match_text_valign: matchTextValign,
+        show_header: showHeader,
+        show_match_counters: showMatchCounters,
+        counter_color: counterColor,
+        counter_text_color: counterTextColor,
+        show_win_chance: showWinChance,
+        table_visible: tableVisible,
+        auto_hide_table_top4: autoHideTableTop4,
+        debug_overlay_layout: debugOverlayLayout,
+        show_rank: showRank,
+        show_logo: showLogo,
+        show_team: showTeam,
+        show_chicken: showChicken,
+        show_kills: showKills,
+        show_total: showTotal,
+        show_status: showStatus,
+        map_name: mapName,
+        map_image: mapImage
+    };
+}
+
+function shouldShowTable(layout, aliveTeams){
+    if(!layout.table_visible) return false;
+    if(!layout.auto_hide_table_top4) return true;
+    let alive = parseInt(aliveTeams, 10);
+    return !Number.isFinite(alive) || alive > 4;
+}
+
+function tableAliveTeams(data){
+    const activeRows = Array.isArray(data && data.teams) ? data.teams.filter(team =>
+        Number(team.alive) > 0 && Number(team.finished) !== 1
+    ).length : 0;
+    // The team rows are authoritative for the Top-4 presentation when the
+    // counter OCR is delayed or stale.  Do not override normal higher counts.
+    return activeRows > 0 && activeRows <= 4 ? activeRows : data.alive_teams;
+}
+
+function applyOverlayLayout(layout, aliveTeams){
+    let clean = normalizeLayout(layout);
+    let table = document.querySelector(".container");
+    let tableWrapper = document.getElementById("tableWrapper");
+    let top5 = document.getElementById("top5");
+    let matchBar = document.getElementById("matchBar");
+    let finishBanner = document.getElementById("finishBanner");
+    let header = document.querySelector(".header");
+    let mapImage = document.getElementById("mapImage");
+    let mapText = document.getElementById("mapText");
+    let matchText = document.getElementById("matchText");
+
+    if(tableWrapper) tableWrapper.dataset.visible = shouldShowTable(clean, aliveTeams) ? "true" : "false";
+
+    table.style.left = "auto";
+    table.style.right = "auto";
+    table.style.top = "auto";
+    table.style.bottom = "auto";
+    if(clean.table_x === "center"){
+        table.style.left = "50%";
+        table.style.transform = `translate(calc(-50% + ${clean.offset_x}px), ${clean.offset_y}px)`;
+    }else{
+        let tableEdgeOffset = 20 - ((clean.table_width - defaultOverlayLayout.table_width) / 2);
+        table.style[clean.table_x] = tableEdgeOffset + "px";
+        table.style.transform = `translate(${clean.offset_x}px, ${clean.offset_y}px)`;
+    }
+    table.style.color = clean.font_color || defaultOverlayLayout.font_color;
+    table.style.width = clean.table_width + "px";
+
+    let rowFontSize = clean.table_text_size;
+    let headerFontSize = clean.table_header_text_size;
+    let logoSize = clean.table_logo_size;
+    let barHeight = clean.table_bar_height;
+    let padX = Math.max(6, Math.min(12, Math.round(clean.table_row_height * 0.24)));
+    let headerScale = Math.max(0.72, Math.min(1.55, ((clean.table_width / defaultOverlayLayout.table_width) + (clean.table_row_height / defaultOverlayLayout.table_row_height)) / 2));
+    let mapImageWidth = Math.max(92, Math.min(230, Math.round(130 * headerScale)));
+    let matchTextWidth = Math.max(54, Math.min(112, Math.round(74 * headerScale)));
+    let matchBarHeight = Math.max(46, clean.map_text_height + 7, Math.round(44 * headerScale));
+    let effectiveMatchBarHeight = clean.show_header ? matchBarHeight : 0;
+    let currentRowCount = Math.max(1, document.querySelectorAll("#teams .row").length || 0);
+    let defaultMatchBarHeight = Math.max(46, defaultOverlayLayout.map_text_height + 7, 44);
+    let counterBarHeight = clean.show_match_counters ? (defaultOverlayLayout.counter_bar_height || 34) : 0;
+    let tableHeightDelta = ((clean.table_row_height - defaultOverlayLayout.table_row_height) * (currentRowCount + 1)) + ((effectiveMatchBarHeight + counterBarHeight) - (defaultMatchBarHeight + (defaultOverlayLayout.counter_bar_height || 34)));
+    let tableVerticalEdgeOffset = 10 - (tableHeightDelta / 2);
+    table.style[clean.table_y] = tableVerticalEdgeOffset + "px";
+    document.documentElement.style.setProperty("--table-width", clean.table_width + "px");
+    document.documentElement.style.setProperty("--table-row-height", clean.table_row_height + "px");
+    document.documentElement.style.setProperty("--table-row-font-size", rowFontSize + "px");
+    document.documentElement.style.setProperty("--table-header-font-size", headerFontSize + "px");
+    document.documentElement.style.setProperty("--table-logo-size", logoSize + "px");
+    document.documentElement.style.setProperty("--table-bar-height", barHeight + "px");
+    document.documentElement.style.setProperty("--status-bar-width", clean.status_bar_width + "px");
+    document.documentElement.style.setProperty("--status-bar-gap", clean.status_bar_gap + "px");
+    document.documentElement.style.setProperty("--status-bar-height", clean.status_bar_height + "px");
+    document.documentElement.style.setProperty("--status-bar-radius", clean.status_bar_radius + "px");
+    document.documentElement.style.setProperty("--status-bar-animation-speed", clean.status_bar_animation_speed + "ms");
+    document.documentElement.style.setProperty("--row-border-thickness", clean.row_border_thickness + "px");
+    document.documentElement.style.setProperty("--row-divider-width", clean.row_divider_width + "px");
+    tableColumns.forEach(column => document.documentElement.style.setProperty(`--${column.widthKey.replaceAll("_", "-")}`, clean[column.widthKey] + "px"));
+    document.documentElement.style.setProperty("--table-row-pad-x", padX + "px");
+    document.documentElement.style.setProperty("--top5-scale", (clean.top5_scale / 100).toFixed(2));
+    document.documentElement.style.setProperty("--popup-scale", (clean.popup_scale / 100).toFixed(2));
+    document.documentElement.style.setProperty("--popup-scale-hidden", ((clean.popup_scale / 100) * 0.9).toFixed(2));
+
+    top5.style.top = "auto";
+    top5.style.bottom = "auto";
+    top5.style.left = "auto";
+    top5.style.right = "auto";
+    top5.style[clean.top5_y] = "5px";
+    if(clean.top5_x === "center"){
+        top5.style.left = "50%";
+        top5.style.transform = `translate(calc(-50% + ${clean.top5_offset_x}px), ${clean.top5_offset_y}px)`;
+        top5.style.transformOrigin = clean.top5_y === "bottom" ? "center bottom" : "center top";
+    }else{
+        top5.style[clean.top5_x] = "20px";
+        top5.style.transform = `translate(${clean.top5_offset_x}px, ${clean.top5_offset_y}px)`;
+        top5.style.transformOrigin = `${clean.top5_x} ${clean.top5_y}`;
+    }
+
+    document.documentElement.style.setProperty("--alive-team-bg", clean.alive_color || defaultOverlayLayout.alive_color);
+    document.documentElement.style.setProperty("--win-chance-offset-x", clean.win_chance_offset_x + "px");
+    document.documentElement.style.setProperty("--win-chance-offset-y", clean.win_chance_offset_y + "px");
+    document.documentElement.style.setProperty("--popup-offset-x", clean.popup_offset_x + "px");
+    document.documentElement.style.setProperty("--popup-offset-y", clean.popup_offset_y + "px");
+    document.documentElement.style.setProperty("--finished-team-bg", clean.finished_color || defaultOverlayLayout.finished_color);
+    document.documentElement.style.setProperty("--table-header-bg", clean.header_color || defaultOverlayLayout.header_color);
+    document.documentElement.style.setProperty("--table-font-color", clean.font_color || defaultOverlayLayout.font_color);
+    document.documentElement.style.setProperty("--status-bar-active", clean.status_bar_color || defaultOverlayLayout.status_bar_color);
+    document.documentElement.style.setProperty("--status-bar-finished", clean.finished_status_bar_color || defaultOverlayLayout.finished_status_bar_color);
+    document.documentElement.style.setProperty("--top5-card-bg", clean.top5_color || defaultOverlayLayout.top5_color);
+    document.documentElement.style.setProperty("--popup-bg", clean.popup_color || defaultOverlayLayout.popup_color);
+    document.documentElement.style.setProperty("--data-left-bg", clean.data_left_color || defaultOverlayLayout.data_left_color);
+    document.documentElement.style.setProperty("--data-right-bg", clean.data_right_color || defaultOverlayLayout.data_right_color);
+    document.documentElement.style.setProperty("--data-left-font-color", clean.table_font_left_color || defaultOverlayLayout.table_font_left_color);
+    document.documentElement.style.setProperty("--data-right-font-color", clean.table_font_right_color || defaultOverlayLayout.table_font_right_color);
+    document.documentElement.style.setProperty("--map-text-color", clean.map_text_color || defaultOverlayLayout.map_text_color);
+    document.documentElement.style.setProperty("--popup-text-color", clean.popup_text_color || defaultOverlayLayout.popup_text_color);
+    document.documentElement.style.setProperty("--top5-text-color", clean.top5_text_color || defaultOverlayLayout.top5_text_color);
+    document.documentElement.style.setProperty("--style-accent-color", clean.style_color || defaultOverlayLayout.style_color);
+    document.documentElement.style.setProperty("--style-accent-soft", `color-mix(in srgb, ${clean.style_color || defaultOverlayLayout.style_color} 18%, transparent)`);
+    document.body.dataset.tableFont = clean.table_font_style;
+    document.body.dataset.headerFont = clean.header_font_style;
+    document.body.dataset.matchFont = clean.match_font_style;
+    document.documentElement.style.setProperty("--table-header-height", clean.table_header_height + "px");
+    if(matchBar){
+        matchBar.style.display = clean.show_header ? "flex" : "none";
+        matchBar.style.background = clean.header_color || defaultOverlayLayout.header_color;
+        matchBar.dataset.baseHeight = matchBarHeight;
+        matchBar.style.minHeight = matchBarHeight + "px";
+    }
+    document.documentElement.style.setProperty("--counter-bg", clean.counter_color || defaultOverlayLayout.counter_color);
+    document.documentElement.style.setProperty("--counter-text-color", clean.counter_text_color || defaultOverlayLayout.counter_text_color);
+    let matchCountersEl = document.getElementById("matchCounters");
+    if(matchCountersEl) matchCountersEl.dataset.visible = clean.show_match_counters ? "true" : "false";
+    if(header) header.style.background = clean.header_color || defaultOverlayLayout.header_color;
+    if(mapImage){
+        mapImage.src = clean.map_image || defaultOverlayLayout.map_image;
+        mapImage.alt = clean.map_name || defaultOverlayLayout.map_name;
+        mapImage.style.width = mapImageWidth + "px";
+    }
+    if(mapText){
+        let verticalAlign = clean.map_text_valign === "middle" ? "center" : (clean.map_text_valign === "bottom" ? "end" : "start");
+        mapText.innerText = clean.side_text || clean.map_text || "";
+        mapText.dataset.baseSize = clean.map_text_size;
+        mapText.dataset.boxHeight = clean.map_text_height;
+        mapText.style.setProperty("font-size", clean.map_text_size + "px", "important");
+        mapText.style.height = clean.map_text_height + "px";
+        mapText.style.maxHeight = clean.map_text_height + "px";
+        mapText.style.textAlign = clean.map_text_align;
+        mapText.style.alignContent = verticalAlign;
+        requestAnimationFrame(fitMapText);
+    }
+    if(matchText){
+        let matchVerticalAlign = clean.match_text_valign === "middle" ? "center" : (clean.match_text_valign === "bottom" ? "end" : "start");
+        matchText.style.flexBasis = matchTextWidth + "px";
+        matchText.style.minWidth = matchTextWidth + "px";
+        matchText.style.textAlign = clean.match_text_align;
+        matchText.style.alignContent = matchVerticalAlign;
+        matchText.style.height = clean.map_text_height + "px";
+        matchText.style.setProperty("font-size", clean.match_text_size + "px", "important");
+    }
+    if(clean.debug_overlay_layout){
+        console.groupCollapsed("D4T overlay layout debug");
+        tableColumns.forEach(column => console.log(`${column.widthKey}: Python/JSON=${clean[column.widthKey]}, CSS=${getComputedStyle(document.documentElement).getPropertyValue(`--${column.widthKey.replaceAll("_", "-")}`).trim()}, DOM=${getComputedStyle(table).width}`));
+        console.log("status_bar_width:", clean.status_bar_width, getComputedStyle(document.documentElement).getPropertyValue("--status-bar-width").trim());
+        console.log("row_divider_width:", clean.row_divider_width, getComputedStyle(document.documentElement).getPropertyValue("--row-divider-width").trim());
+        console.groupEnd();
+    }
+    table.dataset.animation = clean.animation_style;
+    table.dataset.tableStyle = clean.table_style;
+    table.dataset.dataColorMode = clean.data_color_mode;
+    top5.dataset.top5Animation = clean.top5_animation_style;
+    top5.dataset.top5Style = clean.top5_style;
+    top5.dataset.top5Orientation = clean.top5_orientation;
+    if(finishBanner){
+        finishBanner.dataset.popupStyle = clean.popup_style;
+        finishBanner.dataset.popupAnimation = clean.popup_animation_style;
+    }
+    return clean;
+}
+
+function applyTableColumns(layout){
+    let visibleColumns = tableColumns.filter(column => layoutBool(layout, column.field));
+    if(visibleColumns.length === 0){
+        visibleColumns = tableColumns;
+    }
+
+    let gridTemplate = visibleColumns.map(column => `${layout[column.widthKey]}px`).join(" ");
+    document.querySelector(".header").style.gridTemplateColumns = gridTemplate;
+    document.querySelectorAll(".row").forEach(row=>{
+        row.style.gridTemplateColumns = gridTemplate;
+    });
+
+    tableColumns.forEach(column=>{
+        let display = visibleColumns.includes(column) ? "" : "none";
+        document.querySelectorAll(`[data-col="${column.col}"]`).forEach(el=>{
+            el.style.display = display;
+        });
+        let headerAlign = String(layout[column.alignKey] || defaultOverlayLayout[column.alignKey] || "").toLowerCase();
+        if(!["left", "center", "right"].includes(headerAlign)) headerAlign = defaultOverlayLayout[column.alignKey];
+        document.querySelectorAll(`.header [data-col="${column.col}"]`).forEach(el=>{
+            el.style.textAlign = headerAlign;
+        });
+    });
+}
+
+/* Layout contract bridge: keeps every legacy-compatible template in sync with
+   the Python overlay_layout payload. */
+const d4tNormalizeLayoutBase = normalizeLayout;
+normalizeLayout = function(layout){
+    const clean = d4tNormalizeLayoutBase(layout);
+    const raw = layout || {};
+    const number = (key, fallback, min, max) => {
+        let value = parseInt(raw[key] ?? fallback, 10);
+        if(Number.isNaN(value)) value = fallback;
+        return Math.max(min, Math.min(max, value));
+    };
+    clean.table_text_size = number("table_text_size", 13, 8, 36);
+    clean.table_header_text_size = number("table_header_text_size", 12, 8, 28);
+    clean.table_logo_size = number("table_logo_size", 22, 12, 44);
+    clean.table_bar_height = number("table_bar_height", 14, 4, 40);
+    clean.status_bar_height = number("status_bar_height", 14, 4, 40);
+    clean.status_bar_radius = number("status_bar_radius", 2, 0, 20);
+    clean.status_bar_animation_speed = number("status_bar_animation_speed", 450, 0, 3000);
+    clean.row_divider_width = number("row_divider_width", raw.row_border_thickness ?? 1, 0, 8);
+    tableColumns.forEach(column => clean[column.widthKey] = number(column.widthKey, defaultOverlayLayout[column.widthKey], 12, 420));
+    ["table_style", "top5_style", "popup_style"].forEach(key => {
+        if(["modern_glass", "esports_neon_pro", "cyber_dark"].includes(raw[key])) clean[key] = raw[key];
+    });
+    clean.debug_overlay_layout = layoutBool(raw, "debug_overlay_layout");
+    return clean;
+};
+const d4tApplyOverlayLayoutBase = applyOverlayLayout;
+applyOverlayLayout = function(layout, aliveTeams){
+    const clean = d4tApplyOverlayLayoutBase(layout, aliveTeams);
+    const root = document.documentElement.style;
+    root.setProperty("--table-row-font-size", clean.table_text_size + "px");
+    root.setProperty("--table-header-font-size", clean.table_header_text_size + "px");
+    root.setProperty("--table-logo-size", clean.table_logo_size + "px");
+    root.setProperty("--table-bar-height", clean.table_bar_height + "px");
+    root.setProperty("--status-bar-height", clean.status_bar_height + "px");
+    root.setProperty("--status-bar-radius", clean.status_bar_radius + "px");
+    root.setProperty("--status-bar-animation-speed", clean.status_bar_animation_speed + "ms");
+    root.setProperty("--row-divider-width", clean.row_divider_width + "px");
+    tableColumns.forEach(column => root.setProperty(`--${column.widthKey.replaceAll("_", "-")}`, clean[column.widthKey] + "px"));
+    document.querySelectorAll("#teams .row").forEach(row => row.style.borderBottomWidth = clean.row_divider_width + "px");
+    document.querySelectorAll(".alive-box .bar").forEach(bar => {
+        bar.style.height = clean.status_bar_height + "px";
+        bar.style.borderRadius = clean.status_bar_radius + "px";
+        bar.style.transitionDuration = clean.status_bar_animation_speed + "ms";
+    });
+    if(clean.debug_overlay_layout) {
+        console.groupCollapsed("D4T layout debug");
+        tableColumns.forEach(column => console.log(`${column.widthKey}: JSON=${clean[column.widthKey]} CSS=${getComputedStyle(document.documentElement).getPropertyValue(`--${column.widthKey.replaceAll("_", "-")}`).trim()} DOM=${getComputedStyle(document.querySelector(".row") || document.querySelector(".header")).gridTemplateColumns}`));
+        console.groupEnd();
+    }
+    return clean;
+};
+applyTableColumns = function(layout){
+    let visibleColumns = tableColumns.filter(column => layoutBool(layout, column.field));
+    if(!visibleColumns.length) visibleColumns = tableColumns;
+    const gridTemplate = visibleColumns.map(column => `${layout[column.widthKey]}px`).join(" ");
+    document.querySelector(".header").style.gridTemplateColumns = gridTemplate;
+    document.querySelectorAll(".row").forEach(row => row.style.gridTemplateColumns = gridTemplate);
+    tableColumns.forEach(column => {
+        document.querySelectorAll(`[data-col="${column.col}"]`).forEach(element => element.style.display = visibleColumns.includes(column) ? "" : "none");
+        let headerAlign = String(layout[column.alignKey] || defaultOverlayLayout[column.alignKey] || "").toLowerCase();
+        if(!["left", "center", "right"].includes(headerAlign)) headerAlign = defaultOverlayLayout[column.alignKey];
+        document.querySelectorAll(`.header [data-col="${column.col}"]`).forEach(element => element.style.textAlign = headerAlign);
+    });
+};
+
+/* ===== HEADER COLUMN NUDGE (click title -> arrow keys move it) ===== */
+(function(){
+    const NUDGE_KEY = "d4t_header_col_offsets";
+    let nudgeSelected = null;
+    let nudgeOffsets = {};
+    let nudgeHint = null;
+    try{
+        nudgeOffsets = JSON.parse(localStorage.getItem(NUDGE_KEY) || "{}") || {};
+    }catch(err){
+        nudgeOffsets = {};
+    }
+
+    function nudgeEnsureHint(){
+        if(nudgeHint) return nudgeHint;
+        nudgeHint = document.createElement("div");
+        nudgeHint.id = "d4tNudgeHint";
+        document.body.appendChild(nudgeHint);
+        return nudgeHint;
+    }
+    function nudgeShowHint(){
+        const el = nudgeEnsureHint();
+        const l = nudgeOffsets[nudgeSelected] || {x:0, y:0};
+        const src = nudgeCleanLayout || {};
+        const off = {
+            x: (parseInt(src["table_col_" + nudgeSelected + "_dx"] ?? 0, 10) || 0) + (l.x||0),
+            y: (parseInt(src["table_col_" + nudgeSelected + "_dy"] ?? 0, 10) || 0) + (l.y||0)
+        };
+        el.style.display = "block";
+        el.textContent = "[" + nudgeSelected.toUpperCase() + "] arrows=move | shift=x10 | del=reset | esc=done (" + off.x + "," + off.y + ")";
+    }
+    function nudgeHideHint(){
+        if(nudgeHint) nudgeHint.style.display = "none";
+    }
+    let nudgeCleanLayout = null;
+    function nudgeApply(col){
+        const cols = ["rank", "team", "logo", "chicken", "kills", "total", "status"];
+        cols.forEach(c=>{
+            const src = nudgeCleanLayout || {};
+            const jx = parseInt(src["table_col_" + c + "_dx"] ?? 0, 10) || 0;
+            const jy = parseInt(src["table_col_" + c + "_dy"] ?? 0, 10) || 0;
+            const l = nudgeOffsets[c] || {x:0, y:0};
+            document.querySelectorAll(`.header [data-col="${c}"]`).forEach(el=>{
+                el.style.transform = `translate(${jx + (l.x||0)}px, ${jy + (l.y||0)}px)`;
+                el.classList.toggle("d4t-header-selected", nudgeSelected === c);
+            });
+        });
+    }
+    function nudgeSave(){
+        try{ localStorage.setItem(NUDGE_KEY, JSON.stringify(nudgeOffsets)); }catch(err){}
+    }
+    function nudgeDeselect(){
+        if(!nudgeSelected) return;
+        const col = nudgeSelected;
+        nudgeSelected = null;
+        document.querySelectorAll(`.header [data-col="${col}"]`).forEach(el=>el.classList.remove("d4t-header-selected"));
+        nudgeHideHint();
+    }
+
+    document.addEventListener("click", ev=>{
+        const cell = ev.target.closest(".header [data-col]");
+        if(cell){
+            const col = cell.getAttribute("data-col");
+            if(nudgeSelected && nudgeSelected !== col){
+                document.querySelectorAll(`.header [data-col="${nudgeSelected}"]`).forEach(el=>el.classList.remove("d4t-header-selected"));
+            }
+            nudgeSelected = col;
+            nudgeApply(col);
+            nudgeShowHint();
+        }
+    });
+
+    document.addEventListener("keydown", ev=>{
+        if(!nudgeSelected) return;
+        if(ev.key === "Escape"){
+            nudgeDeselect();
+            return;
+        }
+        if(ev.key === "Delete" || ev.key === "Backspace"){
+            ev.preventDefault();
+            nudgeOffsets[nudgeSelected] = {x:0, y:0};
+            nudgeApply(nudgeSelected);
+            nudgeSave();
+            nudgeShowHint();
+            return;
+        }
+        const step = ev.shiftKey ? 10 : 1;
+        const moves = {
+            ArrowLeft: [-step, 0],
+            ArrowRight: [step, 0],
+            ArrowUp: [0, -step],
+            ArrowDown: [0, step]
+        };
+        const move = moves[ev.key];
+        if(!move) return;
+        ev.preventDefault();
+        const cur = nudgeOffsets[nudgeSelected] || {x:0, y:0};
+        cur.x += move[0];
+        cur.y += move[1];
+        nudgeOffsets[nudgeSelected] = cur;
+        nudgeApply(nudgeSelected);
+        nudgeSave();
+        nudgeShowHint();
+    });
+
+    const d4tApplyTableColumnsBase = applyTableColumns;
+    applyTableColumns = function(layout){
+        const result = d4tApplyTableColumnsBase(layout);
+        nudgeCleanLayout = layout || {};
+        nudgeApply();
+        return result;
+    };
+    nudgeApply();
+})();
+
+function rowKey(team){
+    return String(team || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+function loadShownFinishedTeams(){
+    try{
+        return new Set(JSON.parse(localStorage.getItem(FINISH_POPUP_STORAGE_KEY) || "[]"));
+    }catch(err){
+        return new Set();
+    }
+}
+
+function saveShownFinishedTeams(){
+    try{
+        localStorage.setItem(FINISH_POPUP_STORAGE_KEY, JSON.stringify([...shownFinishedTeams]));
+    }catch(err){}
+}
+
+function finishPopupKey(matchNo, team){
+    return String(matchNo || 1) + "_" + rowKey(team);
+}
+
+function markFinishPopupShown(key){
+    shownFinishedTeams.add(key);
+    saveShownFinishedTeams();
+}
+
+function getRowPositions(){
+    let positions = {};
+    document.querySelectorAll("#teams .row").forEach(row=>{
+        positions[row.dataset.teamKey] = row.getBoundingClientRect().top;
+    });
+    return positions;
+}
+
+function animateTableRows(previousPositions, animationStyle){
+    if(animationStyle === "none") return;
+
+    let duration = animationStyle === "smooth" ? 700 : 430;
+    document.querySelectorAll("#teams .row").forEach(row=>{
+        let previousTop = previousPositions[row.dataset.teamKey];
+        if(previousTop === undefined){
+            if(animationStyle === "pop"){
+                row.classList.add("anim-pop");
+                setTimeout(()=>row.classList.remove("anim-pop"), 420);
+            }else if(animationStyle === "slide_io"){
+                row.classList.add("anim-slide-io");
+                setTimeout(()=>row.classList.remove("anim-slide-io"), 460);
+            }else if(animationStyle === "fade_io"){
+                row.classList.add("anim-fade-io");
+                setTimeout(()=>row.classList.remove("anim-fade-io"), 460);
+            }
+            return;
+        }
+
+        let currentTop = row.getBoundingClientRect().top;
+        let deltaY = previousTop - currentTop;
+        if(Math.abs(deltaY) < 1){
+            if(animationStyle === "pop"){
+                row.classList.add("anim-pop");
+                setTimeout(()=>row.classList.remove("anim-pop"), 420);
+            }else if(animationStyle === "fade_io"){
+                row.classList.add("anim-fade-io");
+                setTimeout(()=>row.classList.remove("anim-fade-io"), 460);
+            }
+            return;
+        }
+
+        row.style.transition = "none";
+        row.style.transform = `translateY(${deltaY}px)`;
+        if(animationStyle === "pop") row.classList.add("anim-pop");
+        if(animationStyle === "fade_io") row.style.opacity = "0.35";
+
+        requestAnimationFrame(()=>{
+            row.style.transition = `transform ${duration}ms cubic-bezier(.2,.8,.2,1), opacity 350ms ease, filter 350ms ease`;
+            row.style.transform = "";
+            row.style.opacity = "";
+            if(animationStyle === "pop"){
+                setTimeout(()=>row.classList.remove("anim-pop"), 420);
+            }
+        });
+    });
+}
+
+function fitMapText(){
+    let text = document.getElementById("mapText");
+    if(!text) return;
+
+    let baseSize = parseInt(text.dataset.baseSize || defaultOverlayLayout.map_text_size, 10);
+    let boxHeight = parseInt(text.dataset.boxHeight || defaultOverlayLayout.map_text_height, 10);
+    if(Number.isNaN(baseSize)) baseSize = defaultOverlayLayout.map_text_size;
+    if(Number.isNaN(boxHeight)) boxHeight = defaultOverlayLayout.map_text_height;
+    baseSize = Math.max(8, Math.min(64, baseSize));
+    boxHeight = Math.max(40, Math.min(180, boxHeight));
+    let matchBar = document.getElementById("matchBar");
+    if(matchBar){
+        let baseHeight = parseInt(matchBar.dataset.baseHeight || "0", 10);
+        matchBar.style.minHeight = Math.max(46, boxHeight + 7, Number.isNaN(baseHeight) ? 0 : baseHeight) + "px";
+    }
+    text.style.height = boxHeight + "px";
+    text.style.maxHeight = boxHeight + "px";
+    let sizes = [baseSize, baseSize - 2, baseSize - 4, baseSize - 6, baseSize - 8, 10, 8]
+        .filter((size, index, arr)=>size >= 8 && arr.indexOf(size) === index);
+    for(let size of sizes){
+        text.style.setProperty("font-size", size + "px", "important");
+        if(text.scrollHeight <= text.clientHeight + 1 && text.scrollWidth <= text.clientWidth + 1){
+            break;
+        }
+    }
+}
+
+function cleanTeamName(team){
+    return String(team || "default").trim();
+}
+
+function logoPath(base, name, ext){
+    return base + encodeURIComponent(name).replace(/%2F/gi, "") + "." + ext;
+}
+
+function getLogo(team){
+    return getLogoVariants(team)[0];
+}
+
+function getTeamLogoUrl(row, teamLogos){
+    teamLogos = teamLogos || {};
+    let team = row && row.team ? String(row.team) : "";
+
+    if(team && teamLogos[team]){
+        return teamLogos[team];
+    }
+    if(row && row.team_no !== undefined && row.team_no !== null && teamLogos["Team" + row.team_no]){
+        return teamLogos["Team" + row.team_no];
+    }
+
+    let match = team.match(/\d+/);
+    if(match && teamLogos["Team" + match[0]]){
+        return teamLogos["Team" + match[0]];
+    }
+
+    return "";
+}
+
+function getLogoVariants(team){
+    let name = cleanTeamName(team);
+    let noSpace = name.replace(/\s/g, "");
+    let lowerNoSpace = name.toLowerCase().replace(/\s/g, "");
+
+    let names = [name, noSpace, lowerNoSpace, name.toLowerCase(), name.toUpperCase()];
+    let exts = ["png", "PNG", "jpg", "jpeg", "webp"];
+    let bases = ["logos/", "D4Tbgmilivestanding-web/logos/"];
+    let variants = [];
+
+    bases.forEach(base=>{
+        names.forEach(item=>{
+            exts.forEach(ext=>{
+                variants.push(logoPath(base, item, ext));
+            });
+        });
+        variants.push(base + "default.png");
+    });
+
+    return variants.filter((value, index, arr)=>value && arr.indexOf(value) === index);
+}
+
+function logoFallback(img){
+    let variants = JSON.parse(img.dataset.variants || "[]");
+    let index = parseInt(img.dataset.index || "0", 10) + 1;
+
+    if(index < variants.length){
+        img.dataset.index = index;
+        img.src = variants[index];
+    }else{
+        img.onerror = null;
+        img.src = "logos/default.png";
+    }
+}
+
+function logoImgTag(className, row, teamLogos){
+    let team = row && row.team ? row.team : row;
+    let serverLogo = getTeamLogoUrl(row, teamLogos);
+    let variants = getLogoVariants(team);
+    if(serverLogo) variants.push(serverLogo);
+    variants.push("logos/default.png");
+    variants = variants.filter((value, index, arr)=>value && arr.indexOf(value) === index);
+    return `<img class="${className}" src="${variants[0]}" data-index="0" data-variants='${JSON.stringify(variants)}' onerror="logoFallback(this)">`;
+}
+function aliveBars(n){
+    let h="";
+    for(let i=0;i<4;i++){
+        h+=`<div class="bar ${i<n?'active':''}"></div>`;
+    }
+    return h;
+}
+
+function renderWinChances(chances, layout, teamLogos){
+    let box = document.getElementById("winChance");
+    if(!box) return;
+    if(!layout.show_win_chance || !Array.isArray(chances) || chances.length < 2 || chances.length > 4){
+        box.innerHTML = "";
+        return;
+    }
+    box.innerHTML = chances.map(item=>`
+        <div class="win-card">
+            <div class="win-card-main">
+                ${logoImgTag("win-logo", item, teamLogos)}
+                <div class="win-bars">${aliveBars(item.alive || 0)}</div>
+            </div>
+            <div class="win-label">WWCD - ${item.win_percent || 0}%</div>
+        </div>
+    `).join("");
+}
+
+function showPopup(team,kills,aliveTeams,logoUrl){
+
+    let banner = document.getElementById("finishBanner");
+
+    document.getElementById("popupTeam").innerText = team;
+    document.getElementById("popupKill").innerText = kills + " FINISHES";
+
+    let popupLogo = document.getElementById("popupLogo");
+    let variants = getLogoVariants(team);
+    if(logoUrl) variants.push(logoUrl);
+    variants.push("logos/default.png");
+    variants = variants.filter((value, index, arr)=>value && arr.indexOf(value) === index);
+    popupLogo.dataset.index = "0";
+    popupLogo.dataset.variants = JSON.stringify(variants);
+    popupLogo.onerror = function(){
+        logoFallback(this);
+    };
+    popupLogo.src = variants[0];
+
+    let finishPos = parseInt(aliveTeams || 0, 10) + 1;
+    if(Number.isFinite(finishPos)){
+        document.getElementById("popupTeam").innerText = "#" + finishPos + " - " + team;
+    }
+
+    banner.classList.add("show");
+
+    setTimeout(()=>{
+        banner.classList.remove("show");
+    },6000);
+}
+
+function playNextPopup(){
+    if(popupPlaying) return;
+
+    let item = popupQueue.shift();
+    if(!item) return;
+
+    popupPlaying = true;
+    showPopup(item.team, item.kills, item.aliveTeams, item.logoUrl);
+
+    setTimeout(()=>{
+        popupPlaying = false;
+        playNextPopup();
+    }, 6800);
+}
+
+function queuePopup(team, kills, aliveTeams, logoUrl){
+    popupQueue.push({ team, kills, aliveTeams, logoUrl });
+    playNextPopup();
+}
+function hasRenderableData(data){
+    return data && typeof data === "object" && Array.isArray(data.teams);
+}
+function update(data){
+    if(!hasRenderableData(data)){
+        document.body.classList.add("ready");
+        return;
+    }
+
+    let signature = JSON.stringify({
+        remaining_players: data.remaining_players || "",
+        alive_teams: data.alive_teams || "",
+        match_no: data.match_no || 1,
+        teams: data.teams || [],
+        win_chances: data.win_chances || [],
+        top_players: data.top_players || [],
+        finish_events: data.finish_events || [],
+        show_top5: !!data.show_top5,
+        show_popup: data.show_popup !== false,
+        team_logos: data.team_logos || {},
+        overlay_layout: data.overlay_layout || {}
+    });
+    if(signature === lastRenderedSignature) return;
+    lastRenderedSignature = signature;
+
+    let incomingLayout = data.overlay_layout && Object.keys(data.overlay_layout).length
+    ? data.overlay_layout
+    : lastValidOverlayLayout;
+
+if (incomingLayout) {
+    lastValidOverlayLayout = incomingLayout;
+}
+
+let layout = normalizeLayout(incomingLayout || defaultOverlayLayout);
+    const teamLogos = data.team_logos || {};
+    // Render Win Chance first so Top 4 auto-hide follows its real visibility.
+    renderWinChances(data.win_chances || [], layout, teamLogos);
+    layout = applyOverlayLayout(layout, tableAliveTeams(data));
+    let previousPositions = getRowPositions();
+
+    // ðŸ”¥ MATCH NO UPDATE (ONLY ADDITION)
+    document.getElementById("matchText").innerText = "MATCH " + (data.match_no || 1);
+
+    // ALIVE COUNTERS (ONLY ADDITION) - summed from per-team OCR alive counts
+    let matchCounters = document.getElementById("matchCounters");
+    if(matchCounters){
+        let counterPlayers = 0;
+        let counterTeams = 0;
+        (data.teams || []).forEach((t)=>{
+            let aliveVal = t.finished ? 0 : (Number(t.alive) || 0);
+            counterPlayers += aliveVal;
+            if(aliveVal > 0) counterTeams++;
+        });
+        let playersEl = document.getElementById("alivePlayersCount");
+        let teamsEl = document.getElementById("aliveTeamsCount");
+        if(playersEl) playersEl.innerText = counterPlayers;
+        if(teamsEl) teamsEl.innerText = counterTeams;
+    }
+
+    let teams = (data.teams || []).sort((a,b)=>{
+        if((b.total||0)!==(a.total||0)) return (b.total||0)-(a.total||0);
+
+        let aliveA = a.finished?0:(a.alive||0);
+        let aliveB = b.finished?0:(b.alive||0);
+
+        if(aliveB!==aliveA) return aliveB-aliveA;
+
+        return (b.kills||0)-(a.kills||0);
+    });
+    let html="";
+
+    teams.forEach((t,i)=>{
+        let key = rowKey(t.team);
+        html+=`
+        <div class="row ${t.finished ? 'finished' : 'alive'}" id="team-${key}" data-team-key="${key}">
+            <div data-col="rank">${i+1}</div>
+            <div data-col="logo">${logoImgTag("logo", t, teamLogos)}</div>
+            <div data-col="team" class="team">
+                ${t.team}
+            </div>
+            <div data-col="chicken">${t.chicken||0}</div>
+            <div data-col="kills">${t.kills||0}</div>
+            <div data-col="total">${t.total||0}</div>
+            <div data-col="status" class="alive-box">
+                ${aliveBars(t.finished?0:(t.alive||0))}
+            </div>
+        </div>`;
+    });
+
+    document.getElementById("teams").innerHTML = html;
+    layout = applyOverlayLayout(layout, tableAliveTeams(data));
+    applyTableColumns(layout);
+    animateTableRows(previousPositions, layout.animation_style);
+
+    let matchNo = data.match_no || 1;
+
+if(currentMatchNo !== matchNo){
+    currentMatchNo = matchNo;
+    popupQueue = [];
+    popupPlaying = false;
+    lastFinished = null;
+}
+
+let popupEnabled = data.show_popup !== false;
+if(!popupEnabled){
+    popupQueue = [];
+    popupPlaying = false;
+    document.getElementById("finishBanner").classList.remove("show");
+    teams.forEach(t=>{
+        if(t.finished){
+            markFinishPopupShown(finishPopupKey(matchNo, t.team));
+        }
+    });
+}
+
+let finishEvents = Array.isArray(data.finish_events) ? data.finish_events : [];
+
+if(popupEnabled) finishEvents.forEach(ev=>{
+    if(!ev) return;
+
+    let eventTeam = ev.team || (ev.team_no ? "Team" + ev.team_no : "TEAM");
+    let eventKey = "finish_event:" + String(ev.id || ((ev.match_no || matchNo) + "_" + rowKey(eventTeam)));
+
+    if(!shownFinishedTeams.has(eventKey)){
+        markFinishPopupShown(eventKey);
+        markFinishPopupShown(finishPopupKey(matchNo, eventTeam));
+        lastFinished = eventTeam;
+
+        let eventRow = { team: eventTeam, team_no: ev.team_no };
+        queuePopup(eventTeam, ev.kills || 0, ev.alive_teams || data.alive_teams, getTeamLogoUrl(eventRow, teamLogos));
+
+        let row = document.getElementById("team-"+rowKey(eventTeam));
+        if(row){
+            row.classList.add("flash");
+            setTimeout(()=>{
+                row.classList.remove("flash");
+            },700);
+        }
+    }
+});
+
+if(popupEnabled) teams.forEach(t=>{
+    if(!t.finished) return;
+
+    let key = finishPopupKey(matchNo, t.team);
+
+    if(!shownFinishedTeams.has(key)){
+        markFinishPopupShown(key);
+        lastFinished = t.team;
+
+        queuePopup(t.team, t.kills, data.alive_teams, getTeamLogoUrl(t, teamLogos));
+
+        let row = document.getElementById("team-"+rowKey(t.team));
+
+        if(row){
+    row.classList.add("flash");
+
+    setTimeout(()=>{
+        row.classList.remove("flash");
+    },700);
+}
+    }
+});
+
+    let topHTML="";
+    if(data.show_top5){
+        (data.top_players||[]).forEach((p,i)=>{
+            topHTML+=`
+            <div class="top-card">
+                ${logoImgTag("top-logo", p, teamLogos)}
+                <div class="top-text">
+                    #${i+1}<br>
+                    ${p.team}<br>
+                    ${p.name}<br>
+                    ${p.kills} KILLS
+                </div>
+            </div>`;
+        });
+    }
+
+    document.getElementById("top5").innerHTML = topHTML;
+
+    let wwcdOverlay = document.getElementById("wwcdOverlay");
+    let wwcdVideo = document.getElementById("wwcdVideo");
+    let wwcdImage = document.getElementById("wwcdImage");
+    if(data.wwcd_video){
+        if(wwcdOverlay.style.display === "none"){
+            wwcdOverlay.style.display = "block";
+            wwcdImage.style.display = "none";
+            wwcdVideo.src = IS_LOCAL_OVERLAY ? "/data/wwcd/WWCD.mp4" : "wwcd/WWCD.mp4";
+            wwcdImage.src = IS_LOCAL_OVERLAY ? "/data/match%20end/match%20end.png" : "match%20end/match%20end.png";
+            wwcdVideo.loop = false;
+            wwcdVideo.dataset.wwcdPlayCount = "0";
+            wwcdVideo.onended = function(){
+                let count = parseInt(wwcdVideo.dataset.wwcdPlayCount || "0") + 1;
+                wwcdVideo.dataset.wwcdPlayCount = count;
+                if(count < 2){ wwcdVideo.play().catch(function(){}); }
+                else { wwcdVideo.style.display = "none"; wwcdImage.style.display = "block";
+                    setTimeout(function(){ wwcdImage.style.display = "none"; wwcdOverlay.style.display = "none"; }, 10000);
+                }
+            };
+            wwcdVideo.style.display = "block";
+            wwcdVideo.play().catch(function(){});
+        }
+    } else {
+        if(wwcdOverlay.style.display !== "none"){
+            wwcdVideo.pause();
+            wwcdVideo.currentTime = 0;
+            wwcdVideo.onended = null;
+            wwcdOverlay.style.display = "none";
+            wwcdImage.style.display = "none";
+        }
+    }
+
+    document.body.classList.add("ready");
+}
+
+function fetchData(){
+    if(IS_FILE_OVERLAY){
+        document.body.classList.add("ready");
+        document.getElementById("teams").innerHTML = `
+            <div class="row alive">
+                <div data-col="rank">!</div>
+                <div data-col="team" class="team">Open this overlay from launcher: Open Local HTML</div>
+                <div data-col="chicken">-</div>
+                <div data-col="kills">-</div>
+                <div data-col="total">-</div>
+                <div data-col="status" class="alive-box"></div>
+            </div>`;
+        console.log("Direct file open cannot read live.json. Use http://localhost:8000/overlay%20-D4T.html from launcher.");
+        return;
+    }
+
+    fetch(API_BASE_URL + "?nocache=" + Date.now(), {
+        cache: "no-store"
+    })
+    .then(r=>{
+        if(!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+    })
+    .then(update)
+    .catch(err=>{
+        console.log("overlay data error", err);
+        document.body.classList.add("ready");
+    });
+}
+
+setInterval(fetchData,2000);
+fetchData();
+
+</script>
+
+</body>
+</html>
+
+
+
