@@ -1939,6 +1939,12 @@ function rowKey(team){
     return String(team || "").replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+function rowKeyTeam(t){
+    let teamNo = Number(t && t.team_no);
+    if(Number.isFinite(teamNo)) return "t" + teamNo;
+    return rowKey((t && (t.team_name || t.team)) || "");
+}
+
 function loadShownFinishedTeams(){
     try{
         return new Set(JSON.parse(localStorage.getItem(FINISH_POPUP_STORAGE_KEY) || "[]"));
@@ -2050,6 +2056,16 @@ function cleanTeamName(team){
     return String(team || "default").trim();
 }
 
+// Authoritative display name for a team/logo search: prefer team_name, then
+// the legacy .team string, then the numeric team_no as "Team<no>".
+function teamDisplayName(row){
+    if(!row) return "default";
+    if(row.team_name) return cleanTeamName(row.team_name);
+    if(row.team) return cleanTeamName(row.team);
+    if(row.team_no !== undefined && row.team_no !== null) return "Team" + row.team_no;
+    return "default";
+}
+
 function logoPath(base, name, ext){
     return base + encodeURIComponent(name).replace(/%2F/gi, "") + "." + ext;
 }
@@ -2060,7 +2076,7 @@ function getLogo(team){
 
 function getTeamLogoUrl(row, teamLogos){
     teamLogos = teamLogos || {};
-    let team = row && row.team ? String(row.team) : "";
+    let team = teamDisplayName(row);
 
     if(team && teamLogos[team]){
         return teamLogos[team];
@@ -2113,7 +2129,7 @@ function logoFallback(img){
 }
 
 function logoImgTag(className, row, teamLogos){
-    let team = row && row.team ? row.team : row;
+    let team = teamDisplayName(row);
     let serverLogo = getTeamLogoUrl(row, teamLogos);
     let variants = getLogoVariants(team);
     if(serverLogo) variants.push(serverLogo);
@@ -2300,7 +2316,7 @@ let layout = normalizeLayout(incomingLayout || defaultOverlayLayout);
             </div>
             <div data-col="chicken">${t.chicken||0}</div>
             <div data-col="kills">${t.kills||0}</div>
-            <div data-col="total">${t.total||0}</div>
+            <div data-col="total">${Number(t.alive)||0}/${Number(t.total)||(t.players?t.players.length:0)}</div>
             <div data-col="status" class="alive-box">
                 ${aliveBars(isFinished ? 0 : (Number(t.alive)||0))}
             </div>
@@ -2327,8 +2343,8 @@ if(!popupEnabled){
     popupPlaying = false;
     document.getElementById("finishBanner").classList.remove("show");
     teams.forEach(t=>{
-        if(t.finished){
-            markFinishPopupShown(finishPopupKey(matchNo, t.team));
+        if(Number(t.alive) === 0){
+            markFinishPopupShown(finishPopupKey(matchNo, t.team_name || t.team));
         }
     });
 }
@@ -2346,10 +2362,10 @@ if(popupEnabled) finishEvents.forEach(ev=>{
         markFinishPopupShown(finishPopupKey(matchNo, eventTeam));
         lastFinished = eventTeam;
 
-        let eventRow = { team: eventTeam, team_no: ev.team_no };
+        let eventRow = { team: eventTeam, team_no: ev.team_no, team_name: ev.team_name || ev.team };
         queuePopup(eventTeam, ev.kills || 0, ev.alive_teams || data.alive_teams, getTeamLogoUrl(eventRow, teamLogos));
 
-        let row = document.getElementById("team-"+rowKey(eventTeam));
+        let row = document.getElementById("team-"+rowKeyTeam(eventRow));
         if(row){
             row.classList.add("flash");
             setTimeout(()=>{
@@ -2360,17 +2376,17 @@ if(popupEnabled) finishEvents.forEach(ev=>{
 });
 
 if(popupEnabled) teams.forEach(t=>{
-    if(!t.finished) return;
+    if(Number(t.alive) > 0) return;
 
-    let key = finishPopupKey(matchNo, t.team);
+    let key = finishPopupKey(matchNo, t.team_name || t.team);
 
     if(!shownFinishedTeams.has(key)){
         markFinishPopupShown(key);
-        lastFinished = t.team;
+        lastFinished = t.team_name || t.team;
 
-        queuePopup(t.team, t.kills, data.alive_teams, getTeamLogoUrl(t, teamLogos));
+        queuePopup(t.team_name || t.team, t.kills, data.alive_teams, getTeamLogoUrl(t, teamLogos));
 
-        let row = document.getElementById("team-"+rowKey(t.team));
+        let row = document.getElementById("team-"+rowKeyTeam(t));
 
         if(row){
     row.classList.add("flash");
@@ -2383,16 +2399,27 @@ if(popupEnabled) teams.forEach(t=>{
 });
 
     let topHTML="";
-    if(data.show_top5){
-        (data.top_players||[]).forEach((p,i)=>{
+    const top5Enabled = !!data.show_top5;
+    if(top5Enabled){
+        let topPlayers = Array.isArray(data.top_players) ? data.top_players : [];
+        // DualPC merged state has no top_players[]; derive the top cards from
+        // the authoritative flat players[] (highest kills) when absent.
+        if(topPlayers.length === 0 && Array.isArray(data.players) && data.players.length){
+            topPlayers = data.players
+                .slice()
+                .sort((x,y)=>((Number(y.kills)||0)-(Number(x.kills)||0)))
+                .slice(0, 5);
+        }
+        topPlayers.forEach((p,i)=>{
+            let playerDead = !!(p.finish === true || p.status === "finished" || p.alive === false);
             topHTML+=`
             <div class="top-card">
                 ${logoImgTag("top-logo", p, teamLogos)}
                 <div class="top-text">
                     #${i+1}<br>
-                    ${p.team}<br>
-                    ${p.name}<br>
-                    ${p.kills} KILLS
+                    ${p.team_name || p.team || ("Team" + (p.team_no != null ? p.team_no : ""))}<br>
+                    ${p.player_name || p.name || "?"}<br>
+                    <span class="${playerDead ? 'finished' : ''}">${p.kills} KILLS</span>
                 </div>
             </div>`;
         });
