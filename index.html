@@ -1141,6 +1141,10 @@ body[data-match-font="lobster"]{ --match-font:'Lobster', cursive; }
             <span class="counter-label">TEAMS</span>
             <span class="counter-value" id="aliveTeamsCount">0</span>
         </div>
+        <div class="counter-item">
+            <span class="counter-label">TEAM # FIN</span>
+            <span class="counter-value" id="finishedTeamsCount">0</span>
+        </div>
     </div>
 
     <!-- MATCH BAR -->
@@ -2474,7 +2478,7 @@ function fetchData(){
                 <div data-col="total">-</div>
                 <div data-col="status" class="alive-box"></div>
             </div>`;
-        console.log("Direct file open cannot read live.json. Use http://localhost:8000/overlay%20-D4T.html from launcher.");
+        console.log("Direct file open cannot fetch live state. Serve this side over http(s) or use ?live=<url> to point at the DualPC local/remote endpoint.");
         return;
     }
 
