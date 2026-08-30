@@ -1166,23 +1166,34 @@ body[data-match-font="lobster"]{ --match-font:'Lobster', cursive; }
 
 <script>
 
-// DualPC merged-state endpoints (see server/app.py + server/local_test_server.py).
-// Remote (GitHub Pages / OBS): public /api/v1/master/live on the online server.
-// Local (Main PC dev/test server): the same public route on 127.0.0.1:8770.
-const DUALPC_REMOTE_URL = "https://dualpc-server.onrender.com/api/v1/master/live";
-const DUALPC_LOCAL_URL = "http://127.0.0.1:8770/api/v1/master/live";
+const DEFAULT_KEY_HASH = "4616145c6587514d9ac9e65c39beaca76e40baf7d182dd7d5de92dbfea304676";
 
-// Allow an explicit override via ?live=<url> (mirrors the reference overlay).
-function readLiveUrl(){
+function readOverlayKey(){
     let searchParams = new URLSearchParams(window.location.search || "");
-    let live = (searchParams.get("live") || "").trim();
-    if(live) return live;
-    return null;
+    let key = searchParams.get("key");
+    if(key) return key.trim();
+
+    let hash = (window.location.hash || "").replace(/^#/, "").trim();
+    if(hash){
+        let hashParams = new URLSearchParams(hash.replace(/^\?/, ""));
+        key = hashParams.get("key") || hashParams.get("customer") || hashParams.get("customer_key");
+        if(key) return key.trim();
+        if(/^[a-f0-9]{32,128}$/i.test(hash)) return hash;
+    }
+
+    return DEFAULT_KEY_HASH;
 }
 
+const KEY_HASH = readOverlayKey();
+
+const SERVER_URL = "https://overlay-server-in1h.onrender.com";
 const IS_FILE_OVERLAY = window.location.protocol === "file:";
 const IS_LOCAL_OVERLAY = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-const API_BASE_URL = readLiveUrl() || (IS_LOCAL_OVERLAY ? DUALPC_LOCAL_URL : DUALPC_REMOTE_URL);
+const API_BASE_URL = IS_LOCAL_OVERLAY
+    ? "/live.json"
+    : KEY_HASH
+    ? `${SERVER_URL}/data/${KEY_HASH}`
+    : `${SERVER_URL}/data`;
 const FINISH_POPUP_STORAGE_KEY = "d4t_finish_popups_v1";
 let lastFinished = null;
 let shownFinishedTeams = loadShownFinishedTeams();
@@ -1562,7 +1573,7 @@ function shouldShowTable(layout, aliveTeams){
 
 function tableAliveTeams(data){
     const activeRows = Array.isArray(data && data.teams) ? data.teams.filter(team =>
-        Number(team.alive) > 0
+        Number(team.alive) > 0 && Number(team.finished) !== 1
     ).length : 0;
     // The team rows are authoritative for the Top-4 presentation when the
     // counter OCR is delayed or stale.  Do not override normal higher counts.
@@ -2084,7 +2095,7 @@ function getLogoVariants(team){
 
     let names = [name, noSpace, lowerNoSpace, name.toLowerCase(), name.toUpperCase()];
     let exts = ["png", "PNG", "jpg", "jpeg", "webp"];
-    let bases = ["logos/"];
+    let bases = ["logos/", "D4Tbgmilivestanding-web/logos/"];
     let variants = [];
 
     bases.forEach(base=>{
@@ -2211,7 +2222,6 @@ function update(data){
         alive_teams: data.alive_teams || "",
         match_no: data.match_no || 1,
         teams: data.teams || [],
-        players: data.players || [],
         win_chances: data.win_chances || [],
         top_players: data.top_players || [],
         finish_events: data.finish_events || [],
@@ -2247,7 +2257,7 @@ let layout = normalizeLayout(incomingLayout || defaultOverlayLayout);
         let counterPlayers = 0;
         let counterTeams = 0;
         (data.teams || []).forEach((t)=>{
-            let aliveVal = Number(t.alive) || 0;
+            let aliveVal = t.finished ? 0 : (Number(t.alive) || 0);
             counterPlayers += aliveVal;
             if(aliveVal > 0) counterTeams++;
         });
@@ -2257,28 +2267,11 @@ let layout = normalizeLayout(incomingLayout || defaultOverlayLayout);
         if(teamsEl) teamsEl.innerText = counterTeams;
     }
 
-    // Group the flat top-level players[] by their authoritative team_no so
-    // individual player status (player.alive/status/finish) can be used.
-    let playersByTeam = {};
-    (data.players || []).forEach(player=>{
-        let teamNo = Number(player.team_no);
-        if(!Number.isFinite(teamNo)) return;
-        (playersByTeam[teamNo] = playersByTeam[teamNo] || []).push(player);
-    });
-
-    let teams = (data.teams || []).map(team=>{
-        let teamNo = Number(team.team_no);
-        if(Number.isFinite(teamNo) && playersByTeam[teamNo]){
-            team = Object.assign({}, team, { players: playersByTeam[teamNo].slice() });
-        } else {
-            team = Object.assign({}, team, { players: (team.players || []).slice() });
-        }
-        return team;
-    }).sort((a,b)=>{
+    let teams = (data.teams || []).sort((a,b)=>{
         if((b.total||0)!==(a.total||0)) return (b.total||0)-(a.total||0);
 
-        let aliveA = Number(a.alive)||0;
-        let aliveB = Number(b.alive)||0;
+        let aliveA = a.finished?0:(a.alive||0);
+        let aliveB = b.finished?0:(b.alive||0);
 
         if(aliveB!==aliveA) return aliveB-aliveA;
 
@@ -2287,22 +2280,19 @@ let layout = normalizeLayout(incomingLayout || defaultOverlayLayout);
     let html="";
 
     teams.forEach((t,i)=>{
-        let teamNo = Number(t.team_no);
-        let isFinished = (Number(t.alive) === 0);
-        let key = Number.isFinite(teamNo) ? "t" + teamNo : rowKey(t.team_name || t.team);
-        let teamName = t.team_name || t.team || "Team";
+        let key = rowKey(t.team);
         html+=`
-        <div class="row ${isFinished ? 'finished' : 'alive'}" id="team-${key}" data-team-key="${key}">
+        <div class="row ${t.finished ? 'finished' : 'alive'}" id="team-${key}" data-team-key="${key}">
             <div data-col="rank">${i+1}</div>
             <div data-col="logo">${logoImgTag("logo", t, teamLogos)}</div>
             <div data-col="team" class="team">
-                ${teamName}
+                ${t.team}
             </div>
             <div data-col="chicken">${t.chicken||0}</div>
             <div data-col="kills">${t.kills||0}</div>
             <div data-col="total">${t.total||0}</div>
             <div data-col="status" class="alive-box">
-                ${aliveBars(isFinished ? 0 : (Number(t.alive)||0))}
+                ${aliveBars(t.finished?0:(t.alive||0))}
             </div>
         </div>`;
     });
