@@ -2266,15 +2266,22 @@ let layout = normalizeLayout(incomingLayout || defaultOverlayLayout);
     if(matchCounters){
         let counterPlayers = 0;
         let counterTeams = 0;
+        let counterFinTeams = 0;
         (data.teams || []).forEach((t)=>{
             let aliveVal = Number(t.alive) || 0;
             counterPlayers += aliveVal;
             if(aliveVal > 0) counterTeams++;
+            // A team is COMPLETELY finished only when team.alive === 0.
+            // team.finished is NEVER used here - individual finished players
+            // must not increment the TEAM # FIN counter.
+            if(Number(t.alive) === 0) counterFinTeams++;
         });
         let playersEl = document.getElementById("alivePlayersCount");
         let teamsEl = document.getElementById("aliveTeamsCount");
+        let finEl = document.getElementById("finishedTeamsCount");
         if(playersEl) playersEl.innerText = counterPlayers;
         if(teamsEl) teamsEl.innerText = counterTeams;
+        if(finEl) finEl.innerText = counterFinTeams;
     }
 
     // Group the flat top-level players[] by their authoritative team_no so
