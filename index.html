@@ -2096,20 +2096,37 @@ function getLogo(team){
     return getLogoVariants(team)[0];
 }
 
+function teamLogoBasePath(){
+    // live.json stores a lightweight logo filename (e.g. "Team1.png"); the
+    // overlay decides WHERE to load it from. Online the logo files live in the
+    // GitHub Pages logos/ directory; locally under data/logos. A full URL or
+    // data URL is used as-is.
+    return IS_LOCAL_OVERLAY ? "data/logos/" : "logos/";
+}
+
+function resolveTeamLogoRef(ref){
+    if(!ref) return "";
+    ref = String(ref);
+    if(/^(https?:)?\/\//.test(ref) || /^data:/.test(ref) || ref.indexOf("/") >= 0){
+        return ref;
+    }
+    return teamLogoBasePath() + ref;
+}
+
 function getTeamLogoUrl(row, teamLogos){
     teamLogos = teamLogos || {};
     let team = teamDisplayName(row);
 
     if(team && teamLogos[team]){
-        return teamLogos[team];
+        return resolveTeamLogoRef(teamLogos[team]);
     }
     if(row && row.team_no !== undefined && row.team_no !== null && teamLogos["Team" + row.team_no]){
-        return teamLogos["Team" + row.team_no];
+        return resolveTeamLogoRef(teamLogos["Team" + row.team_no]);
     }
 
     let match = team.match(/\d+/);
     if(match && teamLogos["Team" + match[0]]){
-        return teamLogos["Team" + match[0]];
+        return resolveTeamLogoRef(teamLogos["Team" + match[0]]);
     }
 
     return "";
