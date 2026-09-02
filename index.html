@@ -2311,6 +2311,21 @@ let layout = normalizeLayout(incomingLayout || defaultOverlayLayout);
         (playersByTeam[teamNo] = playersByTeam[teamNo] || []).push(player);
     });
 
+    // Real Total Points (TP) from the existing scoring system. Prefer the
+    // dedicated points field carried by the Main PC (`tp`); treat as available
+    // only when a genuine points value exists. NEVER reuse ALIVE/TOTAL.
+    function teamTP(t){
+        if(t==null) return null;
+        if(t.tp!=null) return Number(t.tp)||0;
+        if(t.points!=null) return Number(t.points)||0;
+        if(t.total_points!=null) return Number(t.total_points)||0;
+        if(t.placement!=null) return Number(t.placement)||0;
+        return null;
+    }
+    let tpTeams = (data.teams || []);
+    const tpEnabled = layoutBool(layout, "show_total");
+    const tpAvailable = tpEnabled && tpTeams.some(t=>teamTP(t)!=null);
+
     let teams = (data.teams || []).map(team=>{
         let teamNo = Number(team.team_no);
         if(Number.isFinite(teamNo) && playersByTeam[teamNo]){
@@ -2320,14 +2335,25 @@ let layout = normalizeLayout(incomingLayout || defaultOverlayLayout);
         }
         return team;
     }).sort((a,b)=>{
-        if((b.total||0)!==(a.total||0)) return (b.total||0)-(a.total||0);
+        if(tpAvailable){
+            let totalA = teamTP(a)||0;
+            let totalB = teamTP(b)||0;
+            if(totalB!==totalA) return totalB-totalA;
+
+            let aliveA = Number(a.alive)||0;
+            let aliveB = Number(b.alive)||0;
+
+            if(aliveB!==aliveA) return aliveB-aliveA;
+
+            return (Number(b.kills)||0)-(Number(a.kills)||0);
+        }
+
+        if((Number(b.kills)||0)!==(Number(a.kills)||0)) return (Number(b.kills)||0)-(Number(a.kills)||0);
 
         let aliveA = Number(a.alive)||0;
         let aliveB = Number(b.alive)||0;
 
-        if(aliveB!==aliveA) return aliveB-aliveA;
-
-        return (b.kills||0)-(a.kills||0);
+        return aliveB-aliveA;
     });
     let html="";
 
@@ -2345,7 +2371,7 @@ let layout = normalizeLayout(incomingLayout || defaultOverlayLayout);
             </div>
             <div data-col="chicken">${t.chicken||0}</div>
             <div data-col="kills">${t.kills||0}</div>
-            <div data-col="total">${Number(t.alive)||0}/${Number(t.total)||(t.players?t.players.length:0)}</div>
+            <div data-col="total">${teamTP(t)!=null ? teamTP(t) : "&mdash;"}</div>
             <div data-col="status" class="alive-box">
                 ${aliveBars(isFinished ? 0 : (Number(t.alive)||0))}
             </div>
